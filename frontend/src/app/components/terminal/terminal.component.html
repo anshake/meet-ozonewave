@@ -1,0 +1,53 @@
+<!-- Chat history -->
+<div
+  #termHistory
+  class="mb-4 flex flex-col gap-3 overflow-y-auto"
+  style="max-height: 280px; font-size: 13px; line-height: 1.8; scrollbar-width: none; -ms-overflow-style: none;"
+>
+  @for (msg of messages(); track $index) {
+    <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+      <span [class]="msg.role === 'user' ? 'text-body' : 'text-muted'">{{ msg.content }}</span>
+    </div>
+  }
+  @if (isThinking()) {
+    <div class="flex justify-start">
+      <span class="text-dim text-[13px] animate-pulse2">thinking...</span>
+    </div>
+  }
+</div>
+
+<!-- Prompt input -->
+<div class="text-sm leading-relaxed flex items-start">
+  <span class="text-amber whitespace-nowrap select-none">ozonewave$&nbsp;</span>
+  <span #inputWrap class="relative inline-block w-full">
+    <textarea
+      #termInput
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      (input)="onInput()"
+      (keydown)="onKeydown($event)"
+      spellcheck="false"
+      autocomplete="off"
+      rows="1"
+      [placeholder]="placeholder()"
+      class="bg-transparent border-none outline-none shadow-none w-full resize-none overflow-hidden leading-relaxed p-0 m-0 block text-body text-sm font-mono placeholder:text-dim focus:outline-none focus:ring-0 focus:shadow-none"
+      style="caret-color: #f0a832;"
+    ></textarea>
+    <div
+      #termMirror
+      aria-hidden="true"
+      class="absolute top-0 left-0 w-full pointer-events-none font-mono text-sm leading-relaxed p-0 m-0 border-0 whitespace-pre-wrap break-words"
+      style="visibility: hidden;"
+    ></div>
+    <span
+      #idleCursor
+      class="w-2 h-[15px] bg-amber animate-blink absolute pointer-events-none"
+      [style.display]="cursorVisible() ? 'inline-block' : 'none'"
+      [style.top.px]="cursorTop()"
+      [style.left.px]="cursorLeft()"
+    ></span>
+  </span>
+</div>
+<p class="text-dim text-xs mt-2 font-mono">
+  type / for commands &nbsp;·&nbsp; shift+enter for newline
+</p>

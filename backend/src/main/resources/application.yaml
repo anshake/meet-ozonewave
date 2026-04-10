@@ -1,0 +1,35 @@
+spring:
+    application:
+        name: meet-ozonewave
+
+    ai:
+        anthropic:
+            api-key: ${ANTHROPIC_API_KEY}
+            chat:
+                model: ${CHAT_MODEL:claude-haiku-4-5}
+        openai:
+            api-key: ${OPENAI_API_KEY}
+            embedding:
+                options:
+                    model: ${EMBEDDING_MODEL:text-embedding-3-small}
+        vectorstore:
+            pgvector:
+                dimensions: 1536
+                distance-type: COSINE_DISTANCE
+                index-type: HNSW
+                initialize-schema: true
+        chat:
+            memory:
+                repository:
+                    jdbc:
+                        initialize-schema: always
+
+
+    jackson:
+        default-property-inclusion: non_null
+
+ow:
+    ai:
+        tool:
+            top-k: 3
+            similarity-threshold: 0.25

@@ -2,6 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface ChatReply {
+  message: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private http = inject(HttpClient);
@@ -15,13 +19,19 @@ export class ChatService {
     return id;
   }
 
-  chat(message: string): Observable<string> {
-    return this.http.post('/api/chat', message, {
+  get tone(): string {
+    return document.cookie.split(';')
+      .find(c => c.trim().startsWith('tone='))
+      ?.split('=')[1] ?? '';
+  }
+
+  chat(message: string): Observable<ChatReply> {
+    return this.http.post<ChatReply>('/api/chat', message, {
       headers: {
         'Content-Type': 'text/plain',
         'ConversationId': this.conversationId,
-      },
-      responseType: 'text',
+        'X-Tone': this.tone,
+      }
     });
   }
 }

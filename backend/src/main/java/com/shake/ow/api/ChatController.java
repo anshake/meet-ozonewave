@@ -21,10 +21,10 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-    String chat(@RequestBody @Size(min = 1, max = 1014) String message,
-            @RequestHeader("ConversationId") String conversationId) {
-        return chatService.chat(message, conversationId);
+    @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    ChatReply chat(@RequestBody @Size(min = 1, max = 1014) String message,
+            @RequestHeader("ConversationId") String conversationId,
+            @RequestHeader(value = "X-Tone", required = false, defaultValue = "") String tone) {
+        return new ChatReply(chatService.chat(message, conversationId, tone));
     }
-
 }

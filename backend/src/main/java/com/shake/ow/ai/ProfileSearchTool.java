@@ -1,5 +1,6 @@
 package com.shake.ow.ai;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
@@ -25,10 +26,11 @@ public class ProfileSearchTool {
     @Tool(description = """
             Search Anton Pavlik's professional profile to retrieve factual information.
             Use this tool for ANY question about Anton's career history, job roles, responsibilities,
-            technical skills, programming languages, frameworks, certifications, education, and projects.
+            technical skills, programming languages, frameworks, certifications, education, projects, and contact information.
             Always call this tool before answering — never answer from memory alone.
             Always prefer latest assignments.
             When a specific client/company name is mentioned (e.g. "ING", "Backbase", "KPN"), pass it as the 'client' parameter.
+            When possible, sort messages by startDate, descending order
             """)
     public String searchProfile(
             @ToolParam(
@@ -47,7 +49,7 @@ public class ProfileSearchTool {
             vectorStore.similaritySearch(
                     SearchRequest.builder()
                                  .query(query)
-                                 .topK(toolProperties.topK())
+                                 .topK(toolProperties.candidateK())
                                  .similarityThreshold(0.0)
                                  .filterExpression(b.eq("client", client).build())
                                  .build())
@@ -57,7 +59,7 @@ public class ProfileSearchTool {
         vectorStore.similaritySearch(
                 SearchRequest.builder()
                              .query(query)
-                             .topK(toolProperties.topK())
+                             .topK(toolProperties.candidateK())
                              .similarityThreshold(toolProperties.similarityThreshold())
                              .build())
                    .forEach(doc -> results.putIfAbsent(doc.getId(), doc));
@@ -67,6 +69,10 @@ public class ProfileSearchTool {
         }
 
         final var result = results.values().stream()
+                                  .sorted(Comparator.comparing(
+                                          doc -> (String) doc.getMetadata().get("startDate"),
+                                          Comparator.nullsLast(Comparator.reverseOrder())))
+                                  .limit(toolProperties.candidateK())
                                   .map(Document::getText)
                                   .collect(Collectors.joining("\n\n---\n\n"));
         log.info("Search results: {}", result);

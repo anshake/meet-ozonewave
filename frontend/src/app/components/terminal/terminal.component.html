@@ -5,8 +5,11 @@
   style="max-height: 280px; font-size: 13px; line-height: 1.8; scrollbar-width: none; -ms-overflow-style: none;"
 >
   @for (msg of messages(); track $index) {
-    <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-      <span [class]="msg.role === 'user' ? 'text-body' : 'text-muted'">{{ msg.content }}</span>
+    <div class="msg-bubble" [class]="msg.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'">
+      <span class="text-dim text-[11px] mb-0.5 select-none">
+        {{ msg.role === 'user' ? 'you' : 'ozonewave' }}@if (msg.role === 'assistant' && msg.tone) {&nbsp;·&nbsp;{{ msg.tone }}}&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}
+      </span>
+      <span [class]="msg.role === 'user' ? 'text-body' : 'text-muted'" [innerHTML]="msg.content.message"></span>
     </div>
   }
   @if (isThinking()) {
@@ -20,6 +23,20 @@
 <div class="text-sm leading-relaxed flex items-start">
   <span class="text-amber whitespace-nowrap select-none">ozonewave$&nbsp;</span>
   <span #inputWrap class="relative inline-block w-full">
+    @if (showMenu()) {
+      <div class="absolute bottom-full left-0 mb-1 bg-[#161b22] border border-[#30363d] rounded text-xs font-mono z-10 min-w-60 shadow-lg">
+        @for (item of menuItems(); track $index) {
+          <div
+            (mousedown)="$event.preventDefault(); menuIndex.set($index); applyMenuSelection()"
+            [class]="$index === menuIndex()
+              ? 'px-3 py-1.5 flex gap-3 bg-[#21262d] cursor-pointer'
+              : 'px-3 py-1.5 flex gap-3 cursor-pointer hover:bg-[#21262d]'">
+            <span class="text-amber">{{ item.label }}</span>
+            <span class="text-dim">{{ item.description }}</span>
+          </div>
+        }
+      </div>
+    }
     <textarea
       #termInput
       (focus)="onFocus()"
@@ -36,12 +53,12 @@
     <div
       #termMirror
       aria-hidden="true"
-      class="absolute top-0 left-0 w-full pointer-events-none font-mono text-sm leading-relaxed p-0 m-0 border-0 whitespace-pre-wrap break-words"
+      class="absolute top-0 left-0 w-full pointer-events-none font-mono text-sm leading-relaxed p-0 m-0 border-0 whitespace-pre-wrap wrap-break-word"
       style="visibility: hidden;"
     ></div>
     <span
       #idleCursor
-      class="w-2 h-[15px] bg-amber animate-blink absolute pointer-events-none"
+      class="w-2 h-3.75 bg-amber animate-blink absolute pointer-events-none"
       [style.display]="cursorVisible() ? 'inline-block' : 'none'"
       [style.top.px]="cursorTop()"
       [style.left.px]="cursorLeft()"
@@ -49,5 +66,5 @@
   </span>
 </div>
 <p class="text-dim text-xs mt-2 font-mono">
-  type / for commands &nbsp;·&nbsp; shift+enter for newline
+  type / for commands &nbsp;·&nbsp; shift+enter for new line
 </p>

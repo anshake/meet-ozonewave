@@ -24,12 +24,12 @@ spring:
                     jdbc:
                         initialize-schema: always
 
-
     jackson:
         default-property-inclusion: non_null
 
 ow:
     ai:
         tool:
-            top-k: 3
+            top-k: 20
+            candidate-k: 8
             similarity-threshold: 0.25

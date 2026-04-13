@@ -80,11 +80,9 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>1.20.6</version>
+            <artifactId>testcontainers-postgresql</artifactId>  <!-- new name! -->
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <dependencyManagement>

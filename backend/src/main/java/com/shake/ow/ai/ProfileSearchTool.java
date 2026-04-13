@@ -49,7 +49,7 @@ public class ProfileSearchTool {
             vectorStore.similaritySearch(
                     SearchRequest.builder()
                                  .query(query)
-                                 .topK(toolProperties.candidateK())
+                                 .topK(toolProperties.topK())
                                  .similarityThreshold(0.0)
                                  .filterExpression(b.eq("client", client).build())
                                  .build())
@@ -59,7 +59,7 @@ public class ProfileSearchTool {
         vectorStore.similaritySearch(
                 SearchRequest.builder()
                              .query(query)
-                             .topK(toolProperties.candidateK())
+                             .topK(toolProperties.topK())
                              .similarityThreshold(toolProperties.similarityThreshold())
                              .build())
                    .forEach(doc -> results.putIfAbsent(doc.getId(), doc));

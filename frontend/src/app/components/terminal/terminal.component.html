@@ -19,6 +19,19 @@
   }
 </div>
 
+<!-- Suggestion chips -->
+@if (messages().length === 0) {
+  <div class="mb-4 flex flex-wrap gap-2">
+    @for (chip of suggestions; track chip) {
+      <button
+        (click)="sendSuggestion(chip)"
+        class="text-xs px-3 py-1.5 border border-border2 rounded text-muted hover:text-amber hover:border-amber transition-colors cursor-pointer">
+        {{ chip }}
+      </button>
+    }
+  </div>
+}
+
 <!-- Prompt input -->
 <div class="text-sm leading-relaxed flex items-start">
   <span class="text-amber whitespace-nowrap select-none">ozonewave$&nbsp;</span>
@@ -66,5 +79,5 @@
   </span>
 </div>
 <p class="text-dim text-xs mt-2 font-mono">
-  type / for commands &nbsp;·&nbsp; shift+enter for new line
+  {{ focusShortcut }} to focus &nbsp;·&nbsp; type / for commands &nbsp;·&nbsp; shift+enter for new line
 </p>

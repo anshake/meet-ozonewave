@@ -1,4 +1,4 @@
-import {afterNextRender, Component, ElementRef, inject, signal, ViewChild} from '@angular/core';
+import {afterNextRender, Component, ElementRef, HostListener, inject, signal, ViewChild} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {ChatReply, ChatService} from '../../services/chat.service';
 import {CommandsService} from '../../services/commands.service';
@@ -32,6 +32,13 @@ export class TerminalComponent {
   private chatService = inject(ChatService);
   private commandsService = inject(CommandsService);
 
+  readonly suggestions = [
+    'What\'s your tech stack?',
+    'Tell me about your experience',
+    'What projects have you shipped?',
+    'Are you open to new work?',
+  ];
+
   messages = signal<Message[]>([]);
   isThinking = signal(false);
   placeholder = signal('ask me anything');
@@ -45,16 +52,26 @@ export class TerminalComponent {
   menuItems = signal<MenuItem[]>([]);
   menuIndex = signal(0);
 
+  readonly focusShortcut = navigator.userAgent.includes('Mac') ? '⌘+/' : 'ctrl+/';
+
   private blurTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     afterNextRender(() => {
-      this.showCursor();
+      this.termInput.nativeElement.focus();
       this.commandsService.getCommands().subscribe({
         next: cmds => this.commands.set(cmds),
         error: err => console.error('Failed to load commands', err),
       });
     });
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKeydown(event: KeyboardEvent): void {
+    if (event.key === '/' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      this.termInput.nativeElement.focus();
+    }
   }
 
   onFocus(): void {
@@ -156,6 +173,10 @@ export class TerminalComponent {
       this.menuIndex.set(0);
       this.showMenu.set(true);
     }
+  }
+
+  sendSuggestion(text: string): void {
+    this.submitMessage(text);
   }
 
   applyMenuSelection(): void {

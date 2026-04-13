@@ -1,0 +1,41 @@
+name: Release
+run-name: "Release v${{ inputs.version || '(resolving...)' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (leave empty to use current SNAPSHOT without -SNAPSHOT suffix)'
+        required: false
+        type: string
+
+jobs:
+  resolve-and-dispatch:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: pom.xml
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "release=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            CURRENT=$(sed -n '/<parent>/,/<\/parent>/d; /<version>/{s/.*<version>\(.*\)<\/version>.*/\1/;p;q;}' pom.xml)
+            echo "release=${CURRENT%-SNAPSHOT}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dispatch release build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run release-build.yml \
+            -f version=${{ steps.version.outputs.release }}

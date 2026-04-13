@@ -8,7 +8,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>app</artifactId>
+    <artifactId>meet-ozonewave-app</artifactId>
     <name>meet-ozonewave-app</name>
     <description>Meet OzoneWave - executable application (backend and frontend)</description>
 

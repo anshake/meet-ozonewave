@@ -1,4 +1,4 @@
-import {afterNextRender, Component, ElementRef, HostListener, inject, signal, ViewChild} from '@angular/core';
+import {afterNextRender, Component, ElementRef, HostListener, inject, Injector, signal, ViewChild} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {ChatReply, ChatService} from '../../services/chat.service';
 import {CommandsService} from '../../services/commands.service';
@@ -31,6 +31,7 @@ export class TerminalComponent {
 
   private chatService = inject(ChatService);
   private commandsService = inject(CommandsService);
+  private injector = inject(Injector);
 
   readonly suggestions = [
     'What\'s your tech stack?',
@@ -191,6 +192,7 @@ export class TerminalComponent {
   private submitMessage(value: string): void {
     if (value.startsWith('/')) {
       const [cmdPart, argPart = ''] = value.slice(1).split(' ');
+      this.messages.update(msgs => [...msgs, {role: 'user', content: {message: value}, timestamp: new Date()}]);
       this.termInput.nativeElement.value = '';
       this.termInput.nativeElement.style.height = 'auto';
       this.showMenu.set(false);
@@ -278,20 +280,20 @@ export class TerminalComponent {
   }
 
   private scrollHistoryToBottom(): void {
-    setTimeout(() => {
+    afterNextRender(() => {
       const el = this.termHistory.nativeElement;
       el.scrollTop = el.scrollHeight;
-    }, 0);
+    }, {injector: this.injector});
   }
 
   private scrollToStartOfLastMessage(): void {
-    setTimeout(() => {
+    afterNextRender(() => {
       const el = this.termHistory.nativeElement;
       const bubbles = el.querySelectorAll<HTMLElement>('.msg-bubble');
       const last = bubbles[bubbles.length - 1];
       if (last) {
         el.scrollTop = last.offsetTop - el.offsetTop;
       }
-    }, 0);
+    }, {injector: this.injector});
   }
 }

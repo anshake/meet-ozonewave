@@ -31,7 +31,9 @@ public class ChatService {
             
             ### DATA SOURCE
             Today is {date}.
-            Use the `searchProfile` tool to retrieve information from Anton's professional profile before answering any question about his background.
+            You have two tools to retrieve profile data — always call one before answering:
+            - `searchProfile` — career history, job roles, skills, certifications, education, and projects.
+            - `getContactInfo` — email, phone, LinkedIn, GitHub. Use this tool exclusively for contact-related questions.
             
             ### OUTPUT FORMAT
             Every response must be a plain HTML fragment with Tailwind CSS classes.

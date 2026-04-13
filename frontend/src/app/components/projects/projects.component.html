@@ -6,7 +6,7 @@
         <div class="bg-bg2 border border-border rounded-md p-5 transition-colors duration-200 hover:border-border2">
           <h3 class="text-amber font-medium text-base mb-1">{{ project.title }}</h3>
           <p class="text-teal text-xs tracking-widest mb-2.5">{{ project.category }} · {{ project.year }}</p>
-          <p class="text-muted text-[13px] leading-relaxed">{{ project.description }}</p>
+          <p class="text-muted text-[13px] leading-relaxed whitespace-pre-line">{{ project.description }}</p>
           <div class="flex gap-2 flex-wrap mt-4">
             @for (tag of project.tags; track tag) {
               <span class="text-muted text-xs border border-border2 rounded px-2 py-0.5">{{ tag }}</span>

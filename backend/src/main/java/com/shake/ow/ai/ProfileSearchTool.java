@@ -26,11 +26,12 @@ public class ProfileSearchTool {
     @Tool(description = """
             Search Anton Pavlik's professional profile to retrieve factual information.
             Use this tool for ANY question about Anton's career history, job roles, responsibilities,
-            technical skills, programming languages, frameworks, certifications, education, projects, and contact information.
+            technical skills, programming languages, frameworks, certifications, education, and projects.
             Always call this tool before answering — never answer from memory alone.
             Always prefer latest assignments.
             When a specific client/company name is mentioned (e.g. "ING", "Backbase", "KPN"), pass it as the 'client' parameter.
-            When possible, sort messages by startDate, descending order
+            When possible, sort results by startDate, descending order.
+            Do NOT use this tool for contact information — use getContactInfo instead.
             """)
     public String searchProfile(
             @ToolParam(
@@ -76,6 +77,34 @@ public class ProfileSearchTool {
                                   .map(Document::getText)
                                   .collect(Collectors.joining("\n\n---\n\n"));
         log.info("Search results: {}", result);
+        return result;
+    }
+
+    @Tool(description = """
+            Retrieve Anton Pavlik's contact information: email, phone, LinkedIn, GitHub.
+            Use this tool when the user asks how to contact Anton, or requests any contact details.
+            Do NOT use searchProfile for this — always use this tool instead.
+            """)
+    public String getContactInfo() {
+        log.info("Using getContactInfo tool");
+
+        var b = new FilterExpressionBuilder();
+        var results = vectorStore.similaritySearch(
+                SearchRequest.builder()
+                             .query("contact information email phone LinkedIn")
+                             .topK(5)
+                             .similarityThreshold(0.0)
+                             .filterExpression(b.eq("contentType", "CONTACT_INFO").build())
+                             .build());
+
+        if (results.isEmpty()) {
+            return "No contact information found.";
+        }
+
+        final var result = results.stream()
+                                  .map(Document::getText)
+                                  .collect(Collectors.joining("\n\n---\n\n"));
+        log.info("Contact info results: {}", result);
         return result;
     }
 }

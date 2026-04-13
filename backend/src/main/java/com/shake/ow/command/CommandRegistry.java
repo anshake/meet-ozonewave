@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.HtmlUtils;
 
 @Component
 public class CommandRegistry {
@@ -27,9 +28,10 @@ public class CommandRegistry {
     }
 
     public CommandHandler find(String commandId) {
-        CommandHandler handler = handlers.get(commandId);
+        final var escapedCommandId = HtmlUtils.htmlEscape(commandId);
+        CommandHandler handler = handlers.get(escapedCommandId);
         if (handler == null) {
-            throw new IllegalArgumentException("Unknown command: " + commandId);
+            throw new IllegalArgumentException("Unknown command: " + escapedCommandId);
         }
         return handler;
     }

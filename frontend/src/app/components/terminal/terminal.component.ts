@@ -205,11 +205,11 @@ export class TerminalComponent {
           this.messages.update(msgs => [...msgs, {role: 'assistant', content: reply, timestamp: new Date(), tone: this.chatService.tone || undefined}]);
           this.scrollToStartOfLastMessage();
         },
-        error: () => {
+        error: (err) => {
           this.isThinking.set(false);
           this.messages.update(msgs => [...msgs, {
             role: 'assistant',
-            content: {message: 'Something went wrong. Try again.'},
+            content: {message: err.error.message || 'Something went wrong. Try again.'},
             timestamp: new Date(),
           }]);
         },

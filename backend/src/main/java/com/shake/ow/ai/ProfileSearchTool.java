@@ -1,7 +1,6 @@
 package com.shake.ow.ai;
 
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.document.Document;
@@ -9,7 +8,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProfileSearchTool {
 
     private final VectorStore vectorStore;
+    private final ProfileRepository profileRepository;
     private final ToolProperties toolProperties;
 
     @Tool(description = """
@@ -38,45 +37,40 @@ public class ProfileSearchTool {
                     description = "A specific, focused search query to find relevant profile information, e.g. 'Java Spring Boot experience', 'AWS certifications', 'backend architecture projects'")
             String query,
             @ToolParam(required = false,
-                    description = "Exact client/company name to filter by, e.g. 'ING', 'Backbase', 'KPN'. Use when the question is about a specific employer or client.")
+                       description = "Exact client/company name to filter by, e.g. 'ING', 'Backbase', 'KPN'. Use when the question is about a specific employer or client.")
             String client) {
 
-        log.info("Using Search tool. Searching for: {}, client filter: {}", query, client);
-
-        var results = new LinkedHashMap<String, Document>();
+        log.debug("Using Search tool. Searching for: {}, client filter: {}", query, client);
 
         if (client != null) {
-            var b = new FilterExpressionBuilder();
-            vectorStore.similaritySearch(
-                    SearchRequest.builder()
-                                 .query(query)
-                                 .topK(toolProperties.topK())
-                                 .similarityThreshold(0.0)
-                                 .filterExpression(b.eq("client", client).build())
-                                 .build())
-                       .forEach(doc -> results.put(doc.getId(), doc));
+            final var contents = profileRepository.findContentByClient(client);
+            if (contents.isEmpty()) {
+                return "No relevant profile information found for client: " + client;
+            }
+            final var result = String.join("\n\n---\n\n", contents);
+            log.debug("Search results (client SQL): {}", result);
+            return result;
         }
 
-        vectorStore.similaritySearch(
+        final var docs = vectorStore.similaritySearch(
                 SearchRequest.builder()
                              .query(query)
                              .topK(toolProperties.topK())
                              .similarityThreshold(toolProperties.similarityThreshold())
-                             .build())
-                   .forEach(doc -> results.putIfAbsent(doc.getId(), doc));
+                             .build());
 
-        if (results.isEmpty()) {
-            return "No relevant profile information found for: " + query + (client != null ? ", client: " + client : "");
+        if (docs.isEmpty()) {
+            return "No relevant profile information found for: " + query;
         }
 
-        final var result = results.values().stream()
-                                  .sorted(Comparator.comparing(
-                                          doc -> (String) doc.getMetadata().get("startDate"),
-                                          Comparator.nullsLast(Comparator.reverseOrder())))
-                                  .limit(toolProperties.candidateK())
-                                  .map(Document::getText)
-                                  .collect(Collectors.joining("\n\n---\n\n"));
-        log.info("Search results: {}", result);
+        final var result = docs.stream()
+                               .sorted(Comparator.comparing(
+                                       doc -> (String) doc.getMetadata().get("startDate"),
+                                       Comparator.nullsLast(Comparator.reverseOrder())))
+                               .limit(toolProperties.candidateK())
+                               .map(Document::getText)
+                               .collect(Collectors.joining("\n\n---\n\n"));
+        log.debug("Search results: {}", result);
         return result;
     }
 
@@ -86,25 +80,16 @@ public class ProfileSearchTool {
             Do NOT use searchProfile for this — always use this tool instead.
             """)
     public String getContactInfo() {
-        log.info("Using getContactInfo tool");
+        log.debug("Using getContactInfo tool");
 
-        var b = new FilterExpressionBuilder();
-        var results = vectorStore.similaritySearch(
-                SearchRequest.builder()
-                             .query("contact information email phone LinkedIn")
-                             .topK(5)
-                             .similarityThreshold(0.0)
-                             .filterExpression(b.eq("contentType", "CONTACT_INFO").build())
-                             .build());
+        final var contents = profileRepository.findContentByContentType("CONTACT_INFO");
 
-        if (results.isEmpty()) {
+        if (contents.isEmpty()) {
             return "No contact information found.";
         }
 
-        final var result = results.stream()
-                                  .map(Document::getText)
-                                  .collect(Collectors.joining("\n\n---\n\n"));
-        log.info("Contact info results: {}", result);
+        final var result = String.join("\n\n---\n\n", contents);
+        log.debug("Contact info results: {}", result);
         return result;
     }
 }

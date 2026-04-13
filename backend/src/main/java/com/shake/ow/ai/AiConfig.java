@@ -10,8 +10,6 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
-import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,14 +31,8 @@ public class AiConfig {
     }
 
     @Bean
-    ToolCallbackProvider profileTools(ProfileSearchTool profileSearchTool) {
-        return MethodToolCallbackProvider.builder()
-                                         .toolObjects(profileSearchTool)
-                                         .build();
-    }
-
-    @Bean
-    ChatClient conversationChatClient(AnthropicChatModel chatModel, ChatMemory chatMemory, ProfileSearchTool profileSearchTool) {
+    ChatClient conversationChatClient(AnthropicChatModel chatModel, ChatMemory chatMemory,
+            ProfileSearchTool profileSearchTool) {
         return ChatClient.builder(chatModel)
                          .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                          .defaultTools(profileSearchTool)

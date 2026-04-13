@@ -57,7 +57,7 @@ public class ChatService {
     public String chat(String message, String conversationId, String tone) {
         log.debug("Chat: {} (tone: {})", message, tone);
         String sanitizedMessage = HtmlUtils.htmlEscape(
-                message.replaceAll("<[^>]*>", "")
+                message.replaceAll("(?s)<[^>]*>", "")
         );
         ToneDescriptor toneDescriptor = toneRegistry.find(tone)
                                                     .or(() -> toneRegistry.find(DEFAULT_TONE_ID))

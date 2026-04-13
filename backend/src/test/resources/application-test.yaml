@@ -1,0 +1,22 @@
+spring:
+
+    docker:
+        compose:
+            lifecycle-management: start_only
+            file: docker-compose-dev.yml
+
+    datasource:
+        url: jdbc:postgresql://localhost:5432/ow
+        username: ow-dev
+        password: dev-only
+
+ow:
+    ingest:
+        poll-delay: 10000
+        error-dir: cv-chunks/error
+        inbox-dir: cv-chunks/in
+        ingested-dir: cv-chunks/ingested
+
+logging:
+    level:
+      com.shake.ow: DEBUG

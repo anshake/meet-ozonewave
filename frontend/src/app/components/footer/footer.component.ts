@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import {Component, signal} from '@angular/core';
 
 @Component({
   selector: 'app-footer',
@@ -11,8 +11,15 @@ export class FooterComponent {
   private readonly mailUser = 'info';
   private readonly mailDomain = 'ozonewave.com';
 
-  get mailHref(): string { return `mailto:${this.mailUser}@${this.mailDomain}`; }
-  get mailLabel(): string { return `${this.mailUser}@${this.mailDomain}`; }
+  get mailHref(): string {
+    return `mailto:${this.mailUser}@${this.mailDomain}`;
+  }
 
-  reveal(): void { this.revealed.set(true); }
+  get mailLabel(): string {
+    return `${this.mailUser}@${this.mailDomain}`;
+  }
+
+  reveal(): void {
+    this.revealed.set(true);
+  }
 }

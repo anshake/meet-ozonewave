@@ -1,4 +1,15 @@
-import {afterNextRender, Component, ElementRef, HostListener, inject, Injector, signal, ViewChild} from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  Injector,
+  OnDestroy,
+  signal,
+  ViewChild
+} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {ChatReply, ChatService} from '../../services/chat.service';
 import {CommandsService} from '../../services/commands.service';
@@ -21,9 +32,10 @@ interface MenuItem {
   selector: 'app-terminal',
   standalone: true,
   imports: [DatePipe],
-  templateUrl: './terminal.component.html'
+  templateUrl: './terminal.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TerminalComponent {
+export class TerminalComponent implements OnDestroy {
   @ViewChild('termInput') termInput!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('termMirror') termMirror!: ElementRef<HTMLDivElement>;
   @ViewChild('inputWrap') inputWrap!: ElementRef<HTMLSpanElement>;
@@ -82,6 +94,12 @@ export class TerminalComponent {
     }
     this.cursorVisible.set(false);
     this.placeholder.set('ask me anything');
+  }
+
+  ngOnDestroy(): void {
+    if (this.blurTimer) {
+      clearTimeout(this.blurTimer);
+    }
   }
 
   onBlur(): void {

@@ -9,7 +9,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.HtmlUtils;
 
 import com.shake.ow.command.ToneDescriptor;
 import com.shake.ow.command.ToneRegistry;
@@ -31,7 +30,7 @@ public class ChatService {
             
             ### DATA SOURCE
             Today is {date}.
-            You have two tools to retrieve profile data — always call one before answering:
+            You MUST call one of the following tools on EVERY response, no exceptions — even for follow-up questions:
             - `searchProfile` — career history, job roles, skills, certifications, education, and projects.
             - `getContactInfo` — email, phone, LinkedIn, GitHub. Use this tool exclusively for contact-related questions.
             
@@ -56,15 +55,12 @@ public class ChatService {
 
     public String chat(String message, String conversationId, String tone) {
         log.debug("Chat: {} (tone: {})", message, tone);
-        String sanitizedMessage = HtmlUtils.htmlEscape(
-                message.replaceAll("(?s)<[^>]*>", "")
-        );
         ToneDescriptor toneDescriptor = toneRegistry.find(tone)
                                                     .or(() -> toneRegistry.find(DEFAULT_TONE_ID))
                                                     .orElseThrow(() -> new IllegalStateException("Default tone not found: " + DEFAULT_TONE_ID));
 
         final var content = chatClient.prompt()
-                                      .user(sanitizedMessage)
+                                      .user(message)
                                       .system(SYSTEM_TEMPLATE.render(Map.of("date", LocalDate.now(), "tone", toneDescriptor.prompt())))
                                       .advisors(a -> a.param(ChatMemory.CONVERSATION_ID,
                                               UUID.nameUUIDFromBytes((conversationId + ":" + toneDescriptor.id()).getBytes(StandardCharsets.UTF_8)).toString()))

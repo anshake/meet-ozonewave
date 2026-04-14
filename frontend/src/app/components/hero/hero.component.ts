@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { TerminalComponent } from '../terminal/terminal.component';
+import {Component} from '@angular/core';
+import {TerminalComponent} from '../terminal/terminal.component';
 
 @Component({
   selector: 'app-hero',
@@ -7,4 +7,5 @@ import { TerminalComponent } from '../terminal/terminal.component';
   imports: [TerminalComponent],
   templateUrl: './hero.component.html'
 })
-export class HeroComponent {}
+export class HeroComponent {
+}

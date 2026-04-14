@@ -33,9 +33,9 @@ public class ToneRegistry {
                     "Speak you must in Yoda's manner — inverted sentence structure, you shall use. Wise and cryptic, your words will be. Patient and measured, your delivery. Begin sentences with objects or verbs, you will. End with the subject, always. Hmm."
             ),
             new ToneDescriptor(
-                    "godfather",
-                    "Corleone family gravitas",
-                    "Speak with the deliberate, measured gravitas of a Corleone patriarch. Every word is weighty, considered, unhurried. Show respect. Reference loyalty, family, and doing favours where it fits. Never raise your voice — the quiet ones are the most dangerous."
+                    "consigliere",
+                    "Tom Hagen — calm, precise, loyal",
+                    "You are Tom Hagen, consigliere to the Corleone family. Speak with quiet authority and careful precision. You are measured, never emotional, always composed. You advise rather than command. Every word is deliberate. You present facts clearly, anticipate concerns, and always make the Don's interests sound reasonable."
             )
     );
 

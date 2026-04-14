@@ -202,7 +202,12 @@ export class TerminalComponent {
       this.commandsService.execute(cmdPart, argPart, this.chatService.tone).subscribe({
         next: reply => {
           this.isThinking.set(false);
-          this.messages.update(msgs => [...msgs, {role: 'assistant', content: reply, timestamp: new Date(), tone: this.chatService.tone || undefined}]);
+          this.messages.update(msgs => [...msgs, {
+            role: 'assistant',
+            content: reply,
+            timestamp: new Date(),
+            tone: this.chatService.tone || undefined
+          }]);
           this.scrollToStartOfLastMessage();
         },
         error: (err) => {
@@ -226,7 +231,12 @@ export class TerminalComponent {
     this.chatService.chat(value).subscribe({
       next: (reply) => {
         this.isThinking.set(false);
-        this.messages.update(msgs => [...msgs, {role: 'assistant', content: reply, timestamp: new Date(), tone: this.chatService.tone || undefined}]);
+        this.messages.update(msgs => [...msgs, {
+          role: 'assistant',
+          content: reply,
+          timestamp: new Date(),
+          tone: this.chatService.tone || undefined
+        }]);
         this.scrollToStartOfLastMessage();
       },
       error: (er) => {

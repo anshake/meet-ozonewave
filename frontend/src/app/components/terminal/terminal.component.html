@@ -8,7 +8,11 @@
       <span class="text-dim text-[11px] mb-0.5 select-none">
         {{ msg.role === 'user' ? 'you' : 'ozonewave' }}@if (msg.role === 'assistant' && msg.tone) {&nbsp;·&nbsp;{{ msg.tone }}}&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}
       </span>
-      <span [class]="msg.role === 'user' ? 'text-body' : 'text-muted'" [innerHTML]="msg.content.message"></span>
+      @if (msg.role === 'user') {
+        <span class="text-body">{{ msg.content.message }}</span>
+      } @else {
+        <span class="text-muted" [innerHTML]="msg.content.message"></span>
+      }
     </div>
   }
   @if (isThinking()) {

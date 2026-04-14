@@ -33,8 +33,6 @@ class CommandControllerTest {
     @MockitoBean
     ChatService chatService;
 
-    // --- GET /api/commands ---
-
     @Test
     void list_returnsAllDescriptors() throws Exception {
         mockMvc.perform(get("/api/commands"))
@@ -42,8 +40,6 @@ class CommandControllerTest {
                .andExpect(jsonPath("$[0].command").value("tone"))
                .andExpect(jsonPath("$[1].command").value("contact"));
     }
-
-    // --- POST /api/commands — tone ---
 
     @Test
     void execute_toneCommand_validArg_returns200WithCookie() throws Exception {
@@ -70,8 +66,6 @@ class CommandControllerTest {
                .andExpect(jsonPath("$.message").value(containsString("Unknown tone")))
                .andExpect(header().doesNotExist("Set-Cookie"));
     }
-
-    // --- POST /api/commands — contact ---
 
     @Test
     void execute_contactCommand_returns200WithChatServiceReply() throws Exception {

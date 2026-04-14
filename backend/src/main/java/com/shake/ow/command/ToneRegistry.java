@@ -46,7 +46,7 @@ public class ToneRegistry {
         return Optional.ofNullable(byId.get(id));
     }
 
-    public List<CommandParameter> toCommandParameters() {
+    public List<CommandParameter> toToneParams() {
         return TONES.stream()
                     .map(t -> new CommandParameter(t.id(), t.description()))
                     .toList();

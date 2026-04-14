@@ -1,8 +1,9 @@
 package com.shake.ow.command;
 
+import static java.util.function.Function.identity;
+
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -16,11 +17,11 @@ public class CommandRegistry {
 
     public CommandRegistry(ToneRegistry toneRegistry, List<CommandHandler> handlers) {
         this.descriptors = List.of(
-                new CommandDescriptor("tone", "set response tone", toneRegistry.toCommandParameters()),
+                new CommandDescriptor("tone", "set response tone", toneRegistry.toToneParams()),
                 new CommandDescriptor("contact", "show contact details", List.of())
         );
         this.handlers = handlers.stream()
-                                .collect(Collectors.toMap(CommandHandler::commandId, Function.identity()));
+                                .collect(Collectors.toMap(CommandHandler::commandId, identity()));
     }
 
     public List<CommandDescriptor> getAll() {

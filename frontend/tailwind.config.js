@@ -1,7 +1,7 @@
 export default {
   theme: {
     extend: {
-      fontFamily: { mono: ['"JetBrains Mono"', 'monospace'] },
+      fontFamily: { mono: ['"Geist Mono"', 'monospace'] },
       colors: {
         bg:      '#0d1117',
         bg2:     '#161b22',

@@ -9,9 +9,9 @@
         {{ msg.role === 'user' ? 'you' : 'ozonewave' }}@if (msg.role === 'assistant' && msg.tone) {&nbsp;·&nbsp;{{ msg.tone }}}&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}
       </span>
       @if (msg.role === 'user') {
-        <span class="text-body">{{ msg.content.message }}</span>
+        <span class="text-body">{{ msg.content }}</span>
       } @else {
-        <span class="text-muted" [innerHTML]="msg.content.message"></span>
+        <span class="text-muted" [innerHTML]="msg.content"></span>
       }
     </div>
   }
@@ -30,7 +30,7 @@
   [class.mb-4]="messages().length === 0"
   [class.max-h-0]="messages().length > 0"
   [class.opacity-0]="messages().length > 0"
-  [class.pointer-events-none]="messages().length > 0">
+  [class.pointer-events-none]="messages().length > 0 || isStreaming() || isThinking()">
   @for (chip of suggestions; track chip) {
     <button
       (click)="sendSuggestion(chip)"
@@ -75,6 +75,7 @@
       autocomplete="off"
       rows="1"
       [placeholder]="placeholder()"
+      [disabled]="isStreaming() || isThinking()"
       role="combobox"
       aria-autocomplete="list"
       [attr.aria-expanded]="showMenu()"

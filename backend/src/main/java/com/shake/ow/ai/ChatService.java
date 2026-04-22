@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -15,6 +16,7 @@ import com.shake.ow.command.ToneRegistry;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 @Slf4j
 @Service
@@ -37,8 +39,9 @@ public class ChatService {
             ### OUTPUT FORMAT
             Every response must be a plain HTML fragment with Tailwind CSS classes.
             Allowed elements: <p>, <ul>, <ol>, <li>, <strong>, <em>, <code>, <br>, <a>.
-            NEVER use markdown. No <html>/<head>/<body> tags. No Javascript. Keep Tailwind minimal
-            (font-semibold, text-sm, mt-2, space-y-1).
+            NEVER use markdown. No <html>/<head>/<body> tags. No Javascript.
+            Allowed Tailwind classes (these ONLY, no others): font-semibold, text-sm, mt-2, space-y-1, text-amber, text-amber2.
+            Wrap important titles in <strong class="text-amber font-semibold">…</strong>.
             
             ### TONE
             {tone}
@@ -55,9 +58,7 @@ public class ChatService {
 
     public String chat(String message, String conversationId, String tone) {
         log.debug("Chat: {} (tone: {})", message, tone);
-        ToneDescriptor toneDescriptor = toneRegistry.find(tone)
-                                                    .or(() -> toneRegistry.find(DEFAULT_TONE_ID))
-                                                    .orElseThrow(() -> new IllegalStateException("Default tone not found: " + DEFAULT_TONE_ID));
+        final var toneDescriptor = getToneDescriptor(tone);
 
         final var content = chatClient.prompt()
                                       .user(message)
@@ -68,5 +69,24 @@ public class ChatService {
                                       .content();
         log.debug("Chat reply: {}", content);
         return content;
+    }
+
+    public Flux<String> stream(String message, String conversationId, String tone) {
+        log.debug("Stream: {} (tone: {})", message, tone);
+        final var toneDescriptor = getToneDescriptor(tone);
+
+        return chatClient.prompt()
+                         .user(message)
+                         .system(SYSTEM_TEMPLATE.render(Map.of("date", LocalDate.now(), "tone", toneDescriptor.prompt())))
+                         .advisors(a -> a.param(ChatMemory.CONVERSATION_ID,
+                                 UUID.nameUUIDFromBytes((conversationId + ":" + toneDescriptor.id()).getBytes(StandardCharsets.UTF_8)).toString()))
+                         .stream()
+                         .content();
+    }
+
+    private @NonNull ToneDescriptor getToneDescriptor(String tone) {
+        return toneRegistry.find(tone)
+                           .or(() -> toneRegistry.find(DEFAULT_TONE_ID))
+                           .orElseThrow(() -> new IllegalStateException("Default tone not found: " + DEFAULT_TONE_ID));
     }
 }

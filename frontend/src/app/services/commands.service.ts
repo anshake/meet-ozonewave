@@ -2,7 +2,7 @@ import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {Command} from '../models/command.model';
-import {ChatReply} from './chat.service';
+import {ChatReply} from '../models/chat-reply.model';
 
 @Injectable({providedIn: 'root'})
 export class CommandsService {

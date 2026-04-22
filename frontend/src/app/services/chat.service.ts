@@ -1,14 +1,8 @@
-import {inject, Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-
-export interface ChatReply {
-  message: string;
-}
+import {Injectable} from '@angular/core';
+import {from, Observable} from 'rxjs';
 
 @Injectable({providedIn: 'root'})
 export class ChatService {
-  private http = inject(HttpClient);
   private conversationId = ChatService.loadOrCreateConversationId();
 
   private static loadOrCreateConversationId(): string {
@@ -25,13 +19,46 @@ export class ChatService {
       ?.split('=')[1] ?? '';
   }
 
-  chat(message: string): Observable<ChatReply> {
-    return this.http.post<ChatReply>('/api/chat', message, {
-      headers: {
-        'Content-Type': 'text/plain',
-        'ConversationId': this.conversationId,
-        'X-Tone': this.tone,
+  chat(message: string): Observable<string> {
+    return from(this.streamChat(message));
+  }
+
+  private async* streamChat(message: string): AsyncGenerator<string> {
+    const controller = new AbortController();
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+          'ConversationId': this.conversationId,
+          'X-Tone': this.tone,
+        },
+        body: message,
+        signal: controller.signal,
+      });
+      if (!response.ok || !response.body) throw new Error(`Request failed: ${response.status}`);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) return;
+        buffer += decoder.decode(value, {stream: true});
+        const frames = buffer.split('\n\n');
+        buffer = frames.pop() ?? '';
+        for (const frame of frames) {
+          const chunk = frame
+            .split('\n')
+            .filter(line => line.startsWith('data:'))
+            .map(line => line.slice('data:'.length))
+            .join('\n');
+          if (chunk) yield chunk;
+        }
       }
-    });
+    } finally {
+      controller.abort();
+    }
   }
 }

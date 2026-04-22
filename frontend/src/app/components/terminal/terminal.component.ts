@@ -11,13 +11,13 @@ import {
   ViewChild
 } from '@angular/core';
 import {DatePipe} from '@angular/common';
-import {ChatReply, ChatService} from '../../services/chat.service';
+import {ChatService} from '../../services/chat.service';
 import {CommandsService} from '../../services/commands.service';
 import {Command} from '../../models/command.model';
 
 interface Message {
   role: 'user' | 'assistant';
-  content: ChatReply;
+  content: string;
   timestamp: Date;
   tone?: string;
 }
@@ -54,6 +54,7 @@ export class TerminalComponent implements OnDestroy {
 
   messages = signal<Message[]>([]);
   isThinking = signal(false);
+  isStreaming = signal(false);
   placeholder = signal('ask me anything');
 
   cursorVisible = signal(false);
@@ -210,7 +211,7 @@ export class TerminalComponent implements OnDestroy {
   private submitMessage(value: string): void {
     if (value.startsWith('/')) {
       const [cmdPart, argPart = ''] = value.slice(1).split(' ');
-      this.messages.update(msgs => [...msgs, {role: 'user', content: {message: value}, timestamp: new Date()}]);
+      this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);
       this.termInput.nativeElement.value = '';
       this.termInput.nativeElement.style.height = 'auto';
       this.showMenu.set(false);
@@ -222,7 +223,7 @@ export class TerminalComponent implements OnDestroy {
           this.isThinking.set(false);
           this.messages.update(msgs => [...msgs, {
             role: 'assistant',
-            content: reply,
+            content: reply.message,
             timestamp: new Date(),
             tone: this.chatService.tone || undefined
           }]);
@@ -232,7 +233,7 @@ export class TerminalComponent implements OnDestroy {
           this.isThinking.set(false);
           this.messages.update(msgs => [...msgs, {
             role: 'assistant',
-            content: {message: err.error.message || 'Something went wrong. Try again.'},
+            content: err.error?.message || 'Something went wrong. Try again.',
             timestamp: new Date(),
           }]);
         },
@@ -240,29 +241,53 @@ export class TerminalComponent implements OnDestroy {
       return;
     }
 
-    this.messages.update(msgs => [...msgs, {role: 'user', content: {message: value}, timestamp: new Date()}]);
+    this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);
     this.termInput.nativeElement.value = '';
     this.termInput.nativeElement.style.height = 'auto';
     this.isThinking.set(true);
+    this.isStreaming.set(true);
+    this.messages.update(msgs => [...msgs, {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      tone: this.chatService.tone || undefined,
+    }]);
     this.scrollHistoryToBottom();
 
+    let raw = '';
+
     this.chatService.chat(value).subscribe({
-      next: (reply) => {
-        this.isThinking.set(false);
-        this.messages.update(msgs => [...msgs, {
-          role: 'assistant',
-          content: reply,
-          timestamp: new Date(),
-          tone: this.chatService.tone || undefined
-        }]);
+      next: chunk => {
+        if (this.isThinking()) this.isThinking.set(false);
+        raw += chunk;
+        const cut = raw.lastIndexOf('>');
+        const committed = cut >= 0 ? raw.slice(0, cut + 1) : '';
+        if (committed) {
+          this.messages.update(msgs => {
+            const copy = [...msgs];
+            copy[copy.length - 1] = {...copy[copy.length - 1], content: committed};
+            return copy;
+          });
+        }
+      },
+      complete: () => {
+        this.messages.update(msgs => {
+          const copy = [...msgs];
+          copy[copy.length - 1] = {...copy[copy.length - 1], content: raw};
+          return copy;
+        });
+        this.isStreaming.set(false);
         this.scrollToStartOfLastMessage();
       },
-      error: (er) => {
-        this.isThinking.set(false);
-        this.messages.update(msgs => [
-          ...msgs,
-          {role: 'assistant', content: {message: 'Something went wrong. Try again.'}, timestamp: new Date()},
-        ]);
+      error: () => {
+        const errMsg = '<p>Something went wrong. Try again.</p>';
+        this.messages.update(msgs => {
+          const copy = [...msgs];
+          const last = copy[copy.length - 1];
+          copy[copy.length - 1] = {...last, content: last.content ? last.content + errMsg : errMsg};
+          return copy;
+        });
+        this.isStreaming.set(false);
       },
     });
   }
@@ -283,7 +308,7 @@ export class TerminalComponent implements OnDestroy {
     const wrap = this.inputWrap.nativeElement;
     const text = this.termInput.nativeElement.value;
 
-    mirror.textContent = text || '\u200b';
+    mirror.textContent = text || '​';
 
     const wrapRect = wrap.getBoundingClientRect();
     const textNode = mirror.firstChild!;

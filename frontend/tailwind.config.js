@@ -1,4 +1,6 @@
 export default {
+  content: ['./src/**/*.{html,ts}'],
+  safelist: ['font-semibold', 'text-sm', 'mt-2', 'space-y-1', 'text-amber', 'text-amber2'],
   theme: {
     extend: {
       fontFamily: { mono: ['"Geist Mono"', 'monospace'] },

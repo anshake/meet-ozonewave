@@ -46,9 +46,4 @@ public class AiConfig {
                          .build();
     }
 
-
-//                                     - Professional and confident, but not stiff — keep it human.
-//                                 - Dry humor is welcome when it fits naturally. Do not force it.
-//            - Keep answers concise. No corporate filler.
-
 }

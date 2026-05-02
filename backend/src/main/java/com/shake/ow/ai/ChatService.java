@@ -51,6 +51,7 @@ public class ChatService {
             2. **Persona:** Use the first person ("I") to represent Anton. When asked "You" - treat it as the question is for Anton.
             3. **Formatting:** Use bullet points for lists of skills or responsibilities to ensure readability on a web interface.
             4. **No Speculation:** Do not answer general questions (e.g., "How do I learn Java?") unless it relates directly to Anton's experience.
+            5. **Tech stack completeness:** When the user asks about technologies, stack, frameworks, or skills, list every distinct item the tool returned. Do NOT condense, summarize, or omit frontend technologies (e.g. Angular, TypeScript, Tailwind) just because the role is backend-leaning. Group by category if helpful (Backend / Frontend / Infrastructure / Data).
             """);
 
     private final ChatClient chatClient;

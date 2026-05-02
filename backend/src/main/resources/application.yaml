@@ -6,6 +6,8 @@ spring:
         anthropic:
             api-key: ${ANTHROPIC_API_KEY}
             chat:
+                options:
+                    temperature: 0.3
                 model: ${CHAT_MODEL:claude-haiku-4-5}
         openai:
             api-key: ${OPENAI_API_KEY}
@@ -30,6 +32,6 @@ spring:
 ow:
     ai:
         tool:
-            top-k: 20
+            top-k: 40
             candidate-k: 8
             similarity-threshold: 0.25

@@ -42,7 +42,7 @@ public class AiConfig {
                                          .builder()
                                          .strategy(SYSTEM_AND_TOOLS)
                                          .build())
-                                 .build())
+                         )
                          .build();
     }
 

@@ -57,6 +57,7 @@ export class TerminalComponent implements OnDestroy {
   isStreaming = signal(false);
   placeholder = signal('ask me anything');
 
+  hasText = signal(false);
   cursorVisible = signal(false);
   cursorTop = signal(0);
   cursorLeft = signal(0);
@@ -115,7 +116,14 @@ export class TerminalComponent implements OnDestroy {
     const el = this.termInput.nativeElement;
     el.style.height = 'auto';
     el.style.height = el.scrollHeight + 'px';
+    this.hasText.set(el.value.trim().length > 0);
     this.updateMenu(el.value);
+  }
+
+  onSendClick(): void {
+    const value = this.termInput.nativeElement.value.trim();
+    if (!value || this.isStreaming() || this.isThinking()) return;
+    this.submitMessage(value);
   }
 
   onKeydown(event: KeyboardEvent): void {
@@ -144,6 +152,7 @@ export class TerminalComponent implements OnDestroy {
 
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
+      if (this.isStreaming() || this.isThinking()) return;
       const value = this.termInput.nativeElement.value.trim();
       if (!value) return;
       this.submitMessage(value);
@@ -214,6 +223,7 @@ export class TerminalComponent implements OnDestroy {
       this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);
       this.termInput.nativeElement.value = '';
       this.termInput.nativeElement.style.height = 'auto';
+      this.hasText.set(false);
       this.showMenu.set(false);
       this.isThinking.set(true);
       this.scrollHistoryToBottom();
@@ -228,6 +238,7 @@ export class TerminalComponent implements OnDestroy {
             tone: this.chatService.tone || undefined
           }]);
           this.scrollToStartOfLastMessage();
+          this.refocusInput();
         },
         error: (err) => {
           this.isThinking.set(false);
@@ -236,6 +247,7 @@ export class TerminalComponent implements OnDestroy {
             content: err.error?.message || 'Something went wrong. Try again.',
             timestamp: new Date(),
           }]);
+          this.refocusInput();
         },
       });
       return;
@@ -244,6 +256,7 @@ export class TerminalComponent implements OnDestroy {
     this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);
     this.termInput.nativeElement.value = '';
     this.termInput.nativeElement.style.height = 'auto';
+    this.hasText.set(false);
     this.isThinking.set(true);
     this.isStreaming.set(true);
     this.messages.update(msgs => [...msgs, {
@@ -273,11 +286,16 @@ export class TerminalComponent implements OnDestroy {
       complete: () => {
         this.messages.update(msgs => {
           const copy = [...msgs];
-          copy[copy.length - 1] = {...copy[copy.length - 1], content: raw};
+          copy[copy.length - 1] = {
+            ...copy[copy.length - 1],
+            content: raw,
+            tone: this.chatService.tone || undefined,
+          };
           return copy;
         });
         this.isStreaming.set(false);
         this.scrollToStartOfLastMessage();
+        this.refocusInput();
       },
       error: () => {
         const errMsg = '<p>Something went wrong. Try again.</p>';
@@ -288,8 +306,15 @@ export class TerminalComponent implements OnDestroy {
           return copy;
         });
         this.isStreaming.set(false);
+        this.refocusInput();
       },
     });
+  }
+
+  private refocusInput(): void {
+    afterNextRender(() => {
+      this.termInput?.nativeElement.focus();
+    }, {injector: this.injector});
   }
 
   private showCursor(): void {

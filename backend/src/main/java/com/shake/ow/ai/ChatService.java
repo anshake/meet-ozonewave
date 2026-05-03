@@ -5,13 +5,11 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
 
-import com.shake.ow.command.ToneDescriptor;
 import com.shake.ow.command.ToneRegistry;
 
 import lombok.RequiredArgsConstructor;
@@ -22,8 +20,6 @@ import reactor.core.publisher.Flux;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
-
-    private static final String DEFAULT_TONE_ID = "monty-python";
 
     private static final PromptTemplate SYSTEM_TEMPLATE = new PromptTemplate("""
             You are the Professional AI Assistant for OzoneWave/Anton Pavlik.
@@ -59,7 +55,7 @@ public class ChatService {
 
     public String chat(String message, String conversationId, String tone) {
         log.debug("Chat: {} (tone: {})", message, tone);
-        final var toneDescriptor = getToneDescriptor(tone);
+        final var toneDescriptor = toneRegistry.resolveOrDefault(tone);
 
         final var content = chatClient.prompt()
                                       .user(message)
@@ -74,7 +70,7 @@ public class ChatService {
 
     public Flux<String> stream(String message, String conversationId, String tone) {
         log.debug("Stream: {} (tone: {})", message, tone);
-        final var toneDescriptor = getToneDescriptor(tone);
+        final var toneDescriptor = toneRegistry.resolveOrDefault(tone);
 
         return chatClient.prompt()
                          .user(message)
@@ -85,9 +81,4 @@ public class ChatService {
                          .content();
     }
 
-    private @NonNull ToneDescriptor getToneDescriptor(String tone) {
-        return toneRegistry.find(tone)
-                           .or(() -> toneRegistry.find(DEFAULT_TONE_ID))
-                           .orElseThrow(() -> new IllegalStateException("Default tone not found: " + DEFAULT_TONE_ID));
-    }
 }

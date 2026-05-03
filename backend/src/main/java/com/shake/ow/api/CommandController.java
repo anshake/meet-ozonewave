@@ -24,11 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CommandController {
 
-    private final CommandRegistry registry;
+    private final CommandRegistry cmdRegistry;
 
     @GetMapping
     List<CommandDescriptor> list() {
-        return registry.getAll();
+        return cmdRegistry.getAll();
     }
 
     @PostMapping
@@ -37,14 +37,10 @@ public class CommandController {
             @RequestHeader("ConversationId") String conversationId,
             @RequestHeader(value = "X-Tone", required = false, defaultValue = "") String tone,
             HttpServletResponse response) {
-        try {
-            CommandResult result = registry.find(request.command()).handle(request.arg(), conversationId, tone);
-            if (result.cookie() != null) {
-                response.addHeader(HttpHeaders.SET_COOKIE, result.cookie().toString());
-            }
-            return ResponseEntity.ok(new ChatReply(result.message()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ChatReply(e.getMessage()));
+        CommandResult result = cmdRegistry.find(request.command()).handle(request.arg(), conversationId, tone);
+        if (result.cookie() != null) {
+            response.addHeader(HttpHeaders.SET_COOKIE, result.cookie().toString());
         }
+        return ResponseEntity.ok(new ChatReply(result.message()));
     }
 }

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ToneRegistry {
 
+    public static final String DEFAULT_TONE_ID = "monty-python";
+
     private static final List<ToneDescriptor> TONES = List.of(
             new ToneDescriptor(
                     "professional",
@@ -42,8 +44,14 @@ public class ToneRegistry {
     private final Map<String, ToneDescriptor> byId = TONES.stream()
             .collect(Collectors.toMap(ToneDescriptor::id, Function.identity()));
 
+    private final ToneDescriptor defaultTone = byId.get(DEFAULT_TONE_ID);
+
     public Optional<ToneDescriptor> find(String id) {
         return Optional.ofNullable(byId.get(id));
+    }
+
+    public ToneDescriptor resolveOrDefault(String id) {
+        return find(id).orElse(defaultTone);
     }
 
     public List<CommandParameter> toToneParams() {

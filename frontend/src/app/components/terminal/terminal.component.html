@@ -6,7 +6,11 @@
   @for (msg of messages(); track $index) {
     <div class="msg-bubble" [class]="msg.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'">
       <span class="text-dim text-[11px] mb-0.5 select-none">
-        {{ msg.role === 'user' ? 'you' : 'ozonewave' }}@if (msg.role === 'assistant' && msg.tone) {&nbsp;·&nbsp;{{ msg.tone }}}&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}
+        <span>{{ msg.role === 'user' ? 'you' : 'ozonewave' }}</span>
+        @if (msg.role === 'assistant' && msg.tone) {
+          <span>&nbsp;·&nbsp;{{ msg.tone }}</span>
+        }
+        <span>&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}</span>
       </span>
       @if (msg.role === 'user') {
         <span class="text-body">{{ msg.content }}</span>
@@ -98,7 +102,17 @@
       [style.left.px]="cursorLeft()"
     ></span>
   </span>
+  @if (hasText()) {
+    <button
+      type="button"
+      (click)="onSendClick()"
+      [disabled]="isStreaming() || isThinking()"
+      aria-label="Send"
+      class="ml-2 shrink-0 w-8 h-8 flex items-center justify-center rounded bg-amber text-black hover:bg-amber2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+      <i class="fa-solid fa-arrow-turn-down text-xs"></i>
+    </button>
+  }
 </div>
 <p class="text-dim text-xs mt-2 font-mono">
-  {{ focusShortcut }} to focus &nbsp;·&nbsp; type / for commands &nbsp;·&nbsp; shift+enter for new line
+  <span class="hidden sm:inline">{{ focusShortcut }} to focus &nbsp;·&nbsp; </span>type / for commands<span class="hidden sm:inline"> &nbsp;·&nbsp; shift+enter for new line</span>
 </p>

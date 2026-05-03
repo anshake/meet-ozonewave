@@ -2,8 +2,9 @@ package com.shake.ow.command;
 
 import java.util.stream.Collectors;
 
-import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
+
+import com.shake.ow.api.Cookies;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,17 +21,13 @@ public class ToneCommandHandler implements CommandHandler {
 
     @Override
     public CommandResult handle(String arg, String conversationId, String tone) {
-        if (toneRegistry.find(arg).isEmpty()) {
-            String valid = toneRegistry.toToneParams().stream()
-                                       .map(CommandParameter::parameter)
-                                       .collect(Collectors.joining(", "));
-            return new CommandResult("Unknown tone: '%s'. Valid options: %s.".formatted(arg, valid));
-        }
-        ResponseCookie cookie = ResponseCookie.from("tone", arg)
-                                              .path("/")
-                                              .maxAge(86400)
-                                              .sameSite("Lax")
-                                              .build();
-        return new CommandResult("tone set to " + arg, cookie);
+        return toneRegistry.find(arg)
+                           .map(descr -> new CommandResult("tone set to " + descr.id(), Cookies.tone(descr.id())))
+                           .orElseGet(() -> {
+                               var valid = toneRegistry.toToneParams().stream()
+                                                          .map(CommandParameter::parameter)
+                                                          .collect(Collectors.joining(", "));
+                               return new CommandResult("Unknown tone: '%s'. Valid options: %s.".formatted(arg, valid));
+                           });
     }
 }

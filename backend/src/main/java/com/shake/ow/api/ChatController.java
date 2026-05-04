@@ -27,7 +27,7 @@ public class ChatController {
     private final ToneRegistry toneRegistry;
 
     @PostMapping(consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    Flux<String> chat(@RequestBody @Size(min = 1, max = 1014) String message,
+    Flux<String> chat(@RequestBody @Size(min = 1, max = 4096) String message,
             @RequestHeader("ConversationId") String conversationId,
             @RequestHeader(value = "X-Tone", required = false, defaultValue = "") String tone,
             HttpServletResponse response) {

@@ -2,7 +2,6 @@ package com.shake.ow.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -91,7 +90,7 @@ class ChatControllerTest {
                .andExpect(header().string("Set-Cookie",
                        org.hamcrest.Matchers.containsString("tone=" + ToneRegistry.DEFAULT_TONE_ID)));
 
-        verify(chatService).stream(eq("hello"), eq("conv-1"), eq(ToneRegistry.DEFAULT_TONE_ID));
+        verify(chatService).stream("hello", "conv-1", ToneRegistry.DEFAULT_TONE_ID);
     }
 
     @Test

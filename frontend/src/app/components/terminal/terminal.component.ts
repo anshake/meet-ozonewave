@@ -69,6 +69,13 @@ export class TerminalComponent implements OnDestroy {
 
   readonly focusShortcut = navigator.userAgent.includes('Mac') ? '⌘+/' : 'ctrl+/';
 
+  private static readonly PASTE_CHAR_THRESHOLD = 300;
+  private static readonly PASTE_LINE_THRESHOLD = 4;
+  private static readonly PASTE_TOKEN_RE = /\[Pasted text #(\d+) \+\d+ lines\]/g;
+
+  private pasteCounter = 0;
+  private pastes = new Map<number, string>();
+
   private blurTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -126,7 +133,54 @@ export class TerminalComponent implements OnDestroy {
     this.submitMessage(value);
   }
 
+  onPaste(event: ClipboardEvent): void {
+    const text = event.clipboardData?.getData('text') ?? '';
+    if (!text) return;
+
+    const lines = text.split('\n').length;
+    if (text.length < TerminalComponent.PASTE_CHAR_THRESHOLD && lines < TerminalComponent.PASTE_LINE_THRESHOLD) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const el = this.termInput.nativeElement;
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+
+    const id = ++this.pasteCounter;
+    this.pastes.set(id, text);
+    const token = `[Pasted text #${id} +${lines} lines]`;
+
+    el.value = el.value.slice(0, start) + token + el.value.slice(end);
+    const caret = start + token.length;
+    el.setSelectionRange(caret, caret);
+
+    this.onInput();
+  }
+
+  onBeforeInput(event: InputEvent): void {
+    const el = this.termInput.nativeElement;
+    const a = el.selectionStart ?? 0;
+    const b = el.selectionEnd ?? 0;
+    const re = new RegExp(TerminalComponent.PASTE_TOKEN_RE.source, 'g');
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(el.value)) !== null) {
+      const start = m.index;
+      const end = start + m[0].length;
+      if ((a > start && a < end) || (b > start && b < end)) {
+        event.preventDefault();
+        return;
+      }
+    }
+  }
+
   onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Backspace' && this.tryDeleteTokenBeforeCaret()) {
+      event.preventDefault();
+      return;
+    }
+
     if (this.showMenu()) {
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -217,7 +271,36 @@ export class TerminalComponent implements OnDestroy {
     el.focus();
   }
 
-  private submitMessage(value: string): void {
+  private expandPastes(text: string): string {
+    return text.replace(TerminalComponent.PASTE_TOKEN_RE, (match, idStr) => {
+      const id = Number(idStr);
+      return this.pastes.has(id) ? this.pastes.get(id)! : match;
+    });
+  }
+
+  private tryDeleteTokenBeforeCaret(): boolean {
+    const el = this.termInput.nativeElement;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    if (start !== end) return false;
+
+    const before = el.value.slice(0, start);
+    const tokenAtEnd = /\[Pasted text #(\d+) \+\d+ lines\]$/.exec(before);
+    if (!tokenAtEnd) return false;
+
+    const id = Number(tokenAtEnd[1]);
+    this.pastes.delete(id);
+    const cutFrom = start - tokenAtEnd[0].length;
+    el.value = el.value.slice(0, cutFrom) + el.value.slice(start);
+    el.setSelectionRange(cutFrom, cutFrom);
+    this.onInput();
+    return true;
+  }
+
+  private submitMessage(rawValue: string): void {
+    const value = this.expandPastes(rawValue);
+    this.pastes.clear();
+    this.pasteCounter = 0;
     if (value.startsWith('/')) {
       const [cmdPart, argPart = ''] = value.slice(1).split(' ');
       this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);

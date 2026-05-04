@@ -48,7 +48,7 @@ public class ProfileSearchTool {
                 return "No relevant profile information found for client: " + client;
             }
             final var result = String.join("\n\n---\n\n", contents);
-            log.debug("Search results (client SQL): {}", result);
+            log.trace("Search results (client SQL): {}", result);
             return result;
         }
 
@@ -70,7 +70,7 @@ public class ProfileSearchTool {
                                .limit(toolProperties.candidateK())
                                .map(Document::getText)
                                .collect(Collectors.joining("\n\n---\n\n"));
-        log.debug("Search results: {}", result);
+        log.trace("Search results: {}", result);
         return result;
     }
 
@@ -89,7 +89,7 @@ public class ProfileSearchTool {
         }
 
         final var result = String.join("\n\n---\n\n", contents);
-        log.debug("Contact info results: {}", result);
+        log.trace("Contact info results: {}", result);
         return result;
     }
 }

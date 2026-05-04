@@ -5,6 +5,7 @@ public enum ContentType {
     PROJECT,
     EDUCATION,
     CERTIFICATION,
-    CONTACT_INFO
+    CONTACT_INFO,
+    AVAILABILITY
 
 }

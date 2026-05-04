@@ -10,6 +10,8 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
+import com.shake.ow.ingest.ContentType;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +33,7 @@ public class ProfileSearchTool {
             When a specific client/company name is mentioned (e.g. "ING", "Backbase", "KPN"), pass it as the 'client' parameter.
             When possible, sort results by startDate, descending order.
             Do NOT use this tool for contact information — use getContactInfo instead.
+            Do NOT use this tool for availability questions — use getAvailability instead.
             """)
     public String searchProfile(
             @ToolParam(
@@ -82,7 +85,7 @@ public class ProfileSearchTool {
     public String getContactInfo() {
         log.debug("Using getContactInfo tool");
 
-        final var contents = profileRepository.findContentByContentType("CONTACT_INFO");
+        final var contents = profileRepository.findContentByContentType(ContentType.CONTACT_INFO);
 
         if (contents.isEmpty()) {
             return "No contact information found.";
@@ -90,6 +93,25 @@ public class ProfileSearchTool {
 
         final var result = String.join("\n\n---\n\n", contents);
         log.trace("Contact info results: {}", result);
+        return result;
+    }
+
+    @Tool(description = """
+            Retrieve Anton Pavlik's availability for new engagements: start date and preferred work mode (remote / hybrid / on-site).
+            Use this tool when the user asks when Anton is available, whether he does remote work, or about on-site requirements.
+            Do NOT use searchProfile for this — always use this tool instead.
+            """)
+    public String getAvailability() {
+        log.debug("Using getAvailability tool");
+
+        final var contents = profileRepository.findContentByContentType(ContentType.AVAILABILITY);
+
+        if (contents.isEmpty()) {
+            return "No availability information found.";
+        }
+
+        final var result = String.join("\n\n---\n\n", contents);
+        log.trace("Availability results: {}", result);
         return result;
     }
 }

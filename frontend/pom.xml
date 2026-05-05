@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.shake.ow</groupId>
         <artifactId>meet-ozonewave</artifactId>
-        <version>0.0.13-SNAPSHOT</version>
+        <version>0.0.14</version>
     </parent>
     <artifactId>frontend</artifactId>
     <name>meet-ozonewave-frontend</name>

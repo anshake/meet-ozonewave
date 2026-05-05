@@ -37,41 +37,30 @@ interface MenuItem {
 })
 export class TerminalComponent implements OnDestroy {
   @ViewChild('termInput') termInput!: ElementRef<HTMLTextAreaElement>;
-  @ViewChild('termMirror') termMirror!: ElementRef<HTMLDivElement>;
-  @ViewChild('inputWrap') inputWrap!: ElementRef<HTMLSpanElement>;
   @ViewChild('termHistory') termHistory!: ElementRef<HTMLDivElement>;
 
   private chatService = inject(ChatService);
   private commandsService = inject(CommandsService);
   private injector = inject(Injector);
 
-  readonly suggestions = [
-    'What\'s your tech stack?',
-    'Tell me about your experience',
-    'What projects have you shipped?',
-    'Are you open to new work?',
-  ];
-
   messages = signal<Message[]>([]);
   isThinking = signal(false);
   isStreaming = signal(false);
-  placeholder = signal('ask me anything');
+  placeholder = signal('ask anything or paste project brief');
 
   hasText = signal(false);
-  cursorVisible = signal(false);
-  cursorTop = signal(0);
-  cursorLeft = signal(0);
 
   commands = signal<Command[]>([]);
   showMenu = signal(false);
   menuItems = signal<MenuItem[]>([]);
   menuIndex = signal(0);
 
-  readonly focusShortcut = navigator.userAgent.includes('Mac') ? '⌘+/' : 'ctrl+/';
+  readonly modKey = /Mac/i.test(navigator.platform) ? '⌘' : 'ctrl';
 
   private static readonly PASTE_CHAR_THRESHOLD = 300;
   private static readonly PASTE_LINE_THRESHOLD = 4;
-  private static readonly PASTE_TOKEN_RE = /\[Pasted text #(\d+) \+\d+ lines\]/g;
+  private static readonly PASTE_TOKEN_RE = /\[Pasted text #(\d+) \+\d+ lines]/g;
+  private static readonly PASTE_TOKEN_RE_END = new RegExp(TerminalComponent.PASTE_TOKEN_RE.source + '$');
 
   private pasteCounter = 0;
   private pastes = new Map<number, string>();
@@ -101,8 +90,6 @@ export class TerminalComponent implements OnDestroy {
       clearTimeout(this.blurTimer);
       this.blurTimer = null;
     }
-    this.cursorVisible.set(false);
-    this.placeholder.set('ask me anything');
   }
 
   ngOnDestroy(): void {
@@ -113,9 +100,7 @@ export class TerminalComponent implements OnDestroy {
 
   onBlur(): void {
     this.blurTimer = setTimeout(() => {
-      this.placeholder.set('');
       this.showMenu.set(false);
-      this.showCursor();
     }, 120);
   }
 
@@ -128,9 +113,7 @@ export class TerminalComponent implements OnDestroy {
   }
 
   onSendClick(): void {
-    const value = this.termInput.nativeElement.value.trim();
-    if (!value || this.isStreaming() || this.isThinking()) return;
-    this.submitMessage(value);
+    this.attemptSubmit();
   }
 
   onPaste(event: ClipboardEvent): void {
@@ -163,9 +146,7 @@ export class TerminalComponent implements OnDestroy {
     const el = this.termInput.nativeElement;
     const a = el.selectionStart ?? 0;
     const b = el.selectionEnd ?? 0;
-    const re = new RegExp(TerminalComponent.PASTE_TOKEN_RE.source, 'g');
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(el.value)) !== null) {
+    for (const m of el.value.matchAll(TerminalComponent.PASTE_TOKEN_RE)) {
       const start = m.index;
       const end = start + m[0].length;
       if ((a > start && a < end) || (b > start && b < end)) {
@@ -206,11 +187,22 @@ export class TerminalComponent implements OnDestroy {
 
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      if (this.isStreaming() || this.isThinking()) return;
-      const value = this.termInput.nativeElement.value.trim();
-      if (!value) return;
-      this.submitMessage(value);
+      this.attemptSubmit();
     }
+  }
+
+  private attemptSubmit(): void {
+    if (this.isStreaming() || this.isThinking()) return;
+    const value = this.termInput.nativeElement.value.trim();
+    if (!value) return;
+    this.submitMessage(value);
+  }
+
+  private resetInput(): void {
+    const el = this.termInput.nativeElement;
+    el.value = '';
+    el.style.height = 'auto';
+    this.hasText.set(false);
   }
 
   updateMenu(value: string): void {
@@ -258,10 +250,6 @@ export class TerminalComponent implements OnDestroy {
     }
   }
 
-  sendSuggestion(text: string): void {
-    this.submitMessage(text);
-  }
-
   applyMenuSelection(): void {
     const item = this.menuItems()[this.menuIndex()];
     const el = this.termInput.nativeElement;
@@ -285,7 +273,7 @@ export class TerminalComponent implements OnDestroy {
     if (start !== end) return false;
 
     const before = el.value.slice(0, start);
-    const tokenAtEnd = /\[Pasted text #(\d+) \+\d+ lines\]$/.exec(before);
+    const tokenAtEnd = TerminalComponent.PASTE_TOKEN_RE_END.exec(before);
     if (!tokenAtEnd) return false;
 
     const id = Number(tokenAtEnd[1]);
@@ -304,9 +292,7 @@ export class TerminalComponent implements OnDestroy {
     if (value.startsWith('/')) {
       const [cmdPart, argPart = ''] = value.slice(1).split(' ');
       this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);
-      this.termInput.nativeElement.value = '';
-      this.termInput.nativeElement.style.height = 'auto';
-      this.hasText.set(false);
+      this.resetInput();
       this.showMenu.set(false);
       this.isThinking.set(true);
       this.scrollHistoryToBottom();
@@ -337,9 +323,7 @@ export class TerminalComponent implements OnDestroy {
     }
 
     this.messages.update(msgs => [...msgs, {role: 'user', content: value, timestamp: new Date()}]);
-    this.termInput.nativeElement.value = '';
-    this.termInput.nativeElement.style.height = 'auto';
-    this.hasText.set(false);
+    this.resetInput();
     this.isThinking.set(true);
     this.isStreaming.set(true);
     this.messages.update(msgs => [...msgs, {
@@ -400,45 +384,6 @@ export class TerminalComponent implements OnDestroy {
     }, {injector: this.injector});
   }
 
-  private showCursor(): void {
-    this.positionCursor();
-    const el = this.idleCursorEl;
-    if (el) {
-      el.style.animation = 'none';
-      void el.offsetWidth;
-      el.style.animation = '';
-    }
-    this.cursorVisible.set(true);
-  }
-
-  private positionCursor(): void {
-    const mirror = this.termMirror.nativeElement;
-    const wrap = this.inputWrap.nativeElement;
-    const text = this.termInput.nativeElement.value;
-
-    mirror.textContent = text || '​';
-
-    const wrapRect = wrap.getBoundingClientRect();
-    const textNode = mirror.firstChild!;
-    const range = document.createRange();
-    const len = textNode.textContent!.length;
-    range.setStart(textNode, Math.max(0, len - 1));
-    range.setEnd(textNode, len);
-    const charRect = range.getBoundingClientRect();
-
-    const top = charRect.bottom - wrapRect.top - 15;
-    const left = text.length === 0 ? 0 : charRect.right - wrapRect.left;
-
-    this.cursorTop.set(Math.max(0, top));
-    this.cursorLeft.set(Math.max(0, left));
-  }
-
-  private get idleCursorEl(): HTMLElement | null {
-    const wrap = this.inputWrap?.nativeElement;
-    if (!wrap) return null;
-    return wrap.querySelector<HTMLElement>('span[style*="display"]') ??
-      wrap.lastElementChild as HTMLElement;
-  }
 
   private scrollHistoryToBottom(): void {
     afterNextRender(() => {

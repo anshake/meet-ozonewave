@@ -1,120 +1,101 @@
-<!-- Chat history -->
+<!-- AI label -->
+<p class="text-amber text-sm tracking-widest mb-3">// assistant terminal</p>
+
+<!-- Prompt card -->
 <div
-  #termHistory
-  class="mb-4 flex flex-col gap-3 overflow-y-auto max-h-[280px] sm:max-h-[360px] text-[13px] leading-[1.8]"
+  class="relative border border-border2 rounded-[10px] bg-bg2/55 px-5 py-4 transition-[border-color,box-shadow] duration-150 focus-within:border-amber focus-within:shadow-[0_0_0_3px_rgba(240,168,50,0.10)] md:px-6 md:py-5"
 >
-  @for (msg of messages(); track $index) {
-    <div class="msg-bubble" [class]="msg.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'">
-      <span class="text-dim text-[11px] mb-0.5 select-none">
-        <span>{{ msg.role === 'user' ? 'you' : 'ozonewave' }}</span>
-        @if (msg.role === 'assistant' && msg.tone) {
-          <span>&nbsp;·&nbsp;{{ msg.tone }}</span>
-        }
-        <span>&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}</span>
-      </span>
-      @if (msg.role === 'user') {
-        <span class="text-body">{{ msg.content }}</span>
-      } @else {
-        <span class="text-muted" [innerHTML]="msg.content"></span>
+  <!-- Chat history -->
+  @if (messages().length > 0 || isThinking()) {
+    <div
+      #termHistory
+      class="mb-4 flex flex-col gap-3 overflow-y-auto max-h-70 sm:max-h-90 text-[13px] leading-[1.8] pr-1"
+    >
+      @for (msg of messages(); track $index) {
+        <div class="msg-bubble" [class]="msg.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'">
+          <span class="text-dim text-[11px] mb-0.5 select-none">
+            <span>{{ msg.role === 'user' ? 'you' : 'ozonewave' }}</span>
+            @if (msg.role === 'assistant' && msg.tone) {
+              <span>&nbsp;·&nbsp;{{ msg.tone }}</span>
+            }
+            <span>&nbsp;·&nbsp;{{ msg.timestamp | date:'HH:mm' }}</span>
+          </span>
+          @if (msg.role === 'user') {
+            <span class="text-body">{{ msg.content }}</span>
+          } @else {
+            <span class="text-muted" [innerHTML]="msg.content"></span>
+          }
+        </div>
+      }
+      @if (isThinking()) {
+        <div class="flex justify-start">
+          <span class="text-dim text-[13px] animate-pulse2">thinking...</span>
+        </div>
       }
     </div>
   }
-  @if (isThinking()) {
-    <div class="flex justify-start">
-      <span class="text-dim text-[13px] animate-pulse2">thinking...</span>
+
+  <!-- Input row -->
+  <div class="flex items-start gap-2">
+    <span class="text-amber whitespace-nowrap select-none font-medium text-base md:text-[17px] leading-relaxed">ozonewave$&nbsp;</span>
+    <span class="relative inline-block w-full min-w-0">
+      @if (showMenu()) {
+        <div
+          id="cmd-listbox"
+          role="listbox"
+          aria-label="Available commands"
+          class="absolute bottom-full left-0 mb-2 bg-bg2 border border-border2 rounded text-xs font-mono z-10 min-w-60 shadow-[0_18px_40px_rgba(0,0,0,0.55)] overflow-hidden">
+          @for (item of menuItems(); track $index) {
+            <div
+              [id]="'cmd-opt-' + $index"
+              role="option"
+              [attr.aria-selected]="$index === menuIndex()"
+              (mousedown)="$event.preventDefault(); menuIndex.set($index); applyMenuSelection()"
+              [class]="$index === menuIndex()
+                ? 'px-3 py-1.5 flex gap-3 bg-[#21262d] cursor-pointer'
+                : 'px-3 py-1.5 flex gap-3 cursor-pointer hover:bg-[#21262d]'">
+              <span class="text-amber">{{ item.label }}</span>
+              <span class="text-dim">{{ item.description }}</span>
+            </div>
+          }
+        </div>
+      }
+      <textarea
+        #termInput
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+        (input)="onInput()"
+        (beforeinput)="onBeforeInput($event)"
+        (keydown)="onKeydown($event)"
+        (paste)="onPaste($event)"
+        spellcheck="false"
+        autocomplete="off"
+        rows="1"
+        [placeholder]="placeholder()"
+        [disabled]="isStreaming() || isThinking()"
+        role="combobox"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="showMenu()"
+        aria-controls="cmd-listbox"
+        [attr.aria-activedescendant]="showMenu() ? 'cmd-opt-' + menuIndex() : null"
+        class="bg-transparent border-none outline-none shadow-none w-full resize-none overflow-hidden leading-relaxed p-0 m-0 block text-text font-mono font-medium text-base md:text-[17px] placeholder:text-dim placeholder:font-normal focus:outline-none focus:ring-0 focus:shadow-none"
+        style="caret-color: #f0a832;"
+      ></textarea>
+    </span>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="flex justify-between items-center gap-4 mt-3 pt-3 border-t border-border text-dim text-xs">
+    <div class="flex gap-3 sm:gap-4 flex-wrap items-center">
+      <span><span class="kbd">/</span>commands</span>
+      <span class="hidden sm:inline-flex items-center"><span class="kbd">{{ modKey }}</span><span class="kbd">/</span>focus</span>
     </div>
-  }
-</div>
-
-<!-- Suggestion chips -->
-<div
-  class="flex flex-wrap gap-2 overflow-hidden transition-all duration-500"
-  [class.max-h-20]="messages().length === 0"
-  [class.opacity-100]="messages().length === 0"
-  [class.mb-4]="messages().length === 0"
-  [class.max-h-0]="messages().length > 0"
-  [class.opacity-0]="messages().length > 0"
-  [class.pointer-events-none]="messages().length > 0 || isStreaming() || isThinking()">
-  @for (chip of suggestions; track chip) {
-    <button
-      (click)="sendSuggestion(chip)"
-      class="text-xs px-3 py-1.5 border border-border2 rounded text-muted hover:text-amber hover:border-amber transition-colors cursor-pointer">
-      {{ chip }}
-    </button>
-  }
-</div>
-
-<!-- Prompt input -->
-<div class="text-sm leading-relaxed flex items-start">
-  <span class="text-amber whitespace-nowrap select-none">ozonewave$&nbsp;</span>
-  <span #inputWrap class="relative inline-block w-full">
-    @if (showMenu()) {
-      <div
-        id="cmd-listbox"
-        role="listbox"
-        aria-label="Available commands"
-        class="absolute bottom-full left-0 mb-1 bg-[#161b22] border border-[#30363d] rounded text-xs font-mono z-10 min-w-60 shadow-lg">
-        @for (item of menuItems(); track $index) {
-          <div
-            [id]="'cmd-opt-' + $index"
-            role="option"
-            [attr.aria-selected]="$index === menuIndex()"
-            (mousedown)="$event.preventDefault(); menuIndex.set($index); applyMenuSelection()"
-            [class]="$index === menuIndex()
-              ? 'px-3 py-1.5 flex gap-3 bg-[#21262d] cursor-pointer'
-              : 'px-3 py-1.5 flex gap-3 cursor-pointer hover:bg-[#21262d]'">
-            <span class="text-amber">{{ item.label }}</span>
-            <span class="text-dim">{{ item.description }}</span>
-          </div>
-        }
-      </div>
-    }
-    <textarea
-      #termInput
-      (focus)="onFocus()"
-      (blur)="onBlur()"
-      (input)="onInput()"
-      (beforeinput)="onBeforeInput($event)"
-      (keydown)="onKeydown($event)"
-      (paste)="onPaste($event)"
-      spellcheck="false"
-      autocomplete="off"
-      rows="1"
-      [placeholder]="placeholder()"
-      [disabled]="isStreaming() || isThinking()"
-      role="combobox"
-      aria-autocomplete="list"
-      [attr.aria-expanded]="showMenu()"
-      [attr.aria-controls]="showMenu() ? 'cmd-listbox' : null"
-      [attr.aria-activedescendant]="showMenu() ? 'cmd-opt-' + menuIndex() : null"
-      class="bg-transparent border-none outline-none shadow-none w-full resize-none overflow-hidden leading-relaxed p-0 m-0 block text-body text-sm font-mono placeholder:text-dim focus:outline-none focus:ring-0 focus:shadow-none"
-      style="caret-color: #f0a832;"
-    ></textarea>
-    <div
-      #termMirror
-      aria-hidden="true"
-      class="absolute top-0 left-0 w-full pointer-events-none font-mono text-sm leading-relaxed p-0 m-0 border-0 whitespace-pre-wrap wrap-break-word"
-      style="visibility: hidden;"
-    ></div>
-    <span
-      #idleCursor
-      class="w-2 h-3.75 bg-amber animate-blink absolute pointer-events-none"
-      [style.display]="cursorVisible() ? 'inline-block' : 'none'"
-      [style.top.px]="cursorTop()"
-      [style.left.px]="cursorLeft()"
-    ></span>
-  </span>
-  @if (hasText()) {
     <button
       type="button"
       (click)="onSendClick()"
-      [disabled]="isStreaming() || isThinking()"
-      aria-label="Send"
-      class="ml-2 shrink-0 w-8 h-8 flex items-center justify-center rounded bg-amber text-black hover:bg-amber2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-      <i class="fa-solid fa-arrow-turn-down text-xs"></i>
+      [disabled]="!hasText() || isStreaming() || isThinking()"
+      class="inline-flex items-center gap-1.5 bg-amber text-[#1a1205] border-0 px-3 py-1.5 rounded font-mono text-xs font-semibold tracking-wide cursor-pointer transition-colors hover:bg-amber2 active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed">
+      Send<i class="fa-solid fa-arrow-turn-down text-[10px]"></i>
     </button>
-  }
+  </div>
 </div>
-<p class="text-dim text-xs mt-2 font-mono">
-  <span class="hidden sm:inline">{{ focusShortcut }} to focus &nbsp;·&nbsp; </span>type / for commands<span class="hidden sm:inline"> &nbsp;·&nbsp; shift+enter for new line</span>
-</p>

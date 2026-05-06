@@ -66,9 +66,11 @@ export class TerminalComponent implements OnDestroy {
     'write in your own language — i\'ll reply in it',
   ];
   tipIndex = signal(0);
+  tipVisible = signal(true);
   private tipTimer: ReturnType<typeof setInterval> | null = null;
 
   private static readonly TIP_ROTATION_MS = 6000;
+  private static readonly TIP_FADE_MS = 250;
   private static readonly PASTE_CHAR_THRESHOLD = 300;
   private static readonly PASTE_LINE_THRESHOLD = 4;
   private static readonly PASTE_TOKEN_RE = /\[Pasted text #(\d+) \+\d+ lines]/g;
@@ -88,7 +90,11 @@ export class TerminalComponent implements OnDestroy {
       });
     });
     this.tipTimer = setInterval(() => {
-      this.tipIndex.update(i => (i + 1) % this.tips.length);
+      this.tipVisible.set(false);
+      setTimeout(() => {
+        this.tipIndex.update(i => (i + 1) % this.tips.length);
+        this.tipVisible.set(true);
+      }, TerminalComponent.TIP_FADE_MS);
     }, TerminalComponent.TIP_ROTATION_MS);
   }
 

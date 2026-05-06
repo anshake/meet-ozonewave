@@ -99,4 +99,4 @@
     </button>
   </div>
 </div>
-<p class="text-xs mt-3"><i class="text-amber fa-regular fa-lightbulb mr-1.5"></i><span class="text-dim">{{ tips[tipIndex()] }}</span></p>
+<p class="text-xs mt-3"><i class="text-amber fa-regular fa-lightbulb mr-1.5"></i><span class="text-dim transition-opacity duration-250" [class.opacity-0]="!tipVisible()">{{ tips[tipIndex()] }}</span></p>

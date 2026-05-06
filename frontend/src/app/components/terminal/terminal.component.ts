@@ -46,7 +46,7 @@ export class TerminalComponent implements OnDestroy {
   messages = signal<Message[]>([]);
   isThinking = signal(false);
   isStreaming = signal(false);
-  placeholder = signal('ask anything or paste project brief');
+  placeholder = signal('ask anything');
 
   hasText = signal(false);
 
@@ -57,6 +57,18 @@ export class TerminalComponent implements OnDestroy {
 
   readonly modKey = /Mac/i.test(navigator.platform) ? '⌘' : 'ctrl';
 
+  readonly tips = [
+    'type / to browse commands like /contact, /tone',
+    `press ${this.modKey}/ to jump back to the input from anywhere`,
+    `paste a job description or project brief — i'll respond in context`,
+    'shift+enter for a new line, enter to send',
+    'try /tone to change how i reply',
+    'write in your own language — i\'ll reply in it',
+  ];
+  tipIndex = signal(0);
+  private tipTimer: ReturnType<typeof setInterval> | null = null;
+
+  private static readonly TIP_ROTATION_MS = 6000;
   private static readonly PASTE_CHAR_THRESHOLD = 300;
   private static readonly PASTE_LINE_THRESHOLD = 4;
   private static readonly PASTE_TOKEN_RE = /\[Pasted text #(\d+) \+\d+ lines]/g;
@@ -75,6 +87,9 @@ export class TerminalComponent implements OnDestroy {
         error: err => console.error('Failed to load commands', err),
       });
     });
+    this.tipTimer = setInterval(() => {
+      this.tipIndex.update(i => (i + 1) % this.tips.length);
+    }, TerminalComponent.TIP_ROTATION_MS);
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -95,6 +110,9 @@ export class TerminalComponent implements OnDestroy {
   ngOnDestroy(): void {
     if (this.blurTimer) {
       clearTimeout(this.blurTimer);
+    }
+    if (this.tipTimer) {
+      clearInterval(this.tipTimer);
     }
   }
 

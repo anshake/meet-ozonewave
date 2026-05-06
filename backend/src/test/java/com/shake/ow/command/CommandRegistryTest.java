@@ -1,36 +1,25 @@
 package com.shake.ow.command;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.shake.ow.ai.ChatService;
 
 class CommandRegistryTest {
 
     private CommandRegistry registry;
-    private CommandHandler handlerA;
-    private CommandHandler handlerB;
+    private final CommandHandler handlerA = new ToneCommandHandler(new ToneRegistry());
+    private final CommandHandler handlerB = new ContactCommandHandler(mock(ChatService.class));
 
     @BeforeEach
     void setUp() {
-        handlerA = stubHandler("tone");
-        handlerB = stubHandler("contact");
-        registry = new CommandRegistry(new ToneRegistry(), List.of(handlerA, handlerB));
-    }
-
-    private static CommandHandler stubHandler(String id) {
-        return new CommandHandler() {
-            @Override
-            public String commandId() { return id; }
-
-            @Override
-            public CommandResult handle(String arg, String conversationId, String tone) {
-                throw new UnsupportedOperationException();
-            }
-        };
+        registry = new CommandRegistry(List.of(handlerA, handlerB));
     }
 
     @Test
@@ -44,9 +33,9 @@ class CommandRegistryTest {
     @Test
     void getAll_toneDescriptor_hasParameters() {
         CommandDescriptor tone = registry.getAll().stream()
-                .filter(d -> d.command().equals("tone"))
-                .findFirst()
-                .orElseThrow();
+                                         .filter(d -> d.command().equals("tone"))
+                                         .findFirst()
+                                         .orElseThrow();
 
         assertThat(tone.parameters())
                 .isNotEmpty()
@@ -57,9 +46,9 @@ class CommandRegistryTest {
     @Test
     void getAll_contactDescriptor_hasNoParameters() {
         CommandDescriptor contact = registry.getAll().stream()
-                .filter(d -> d.command().equals("contact"))
-                .findFirst()
-                .orElseThrow();
+                                            .filter(d -> d.command().equals("contact"))
+                                            .findFirst()
+                                            .orElseThrow();
 
         assertThat(contact.parameters()).isEmpty();
     }

@@ -16,11 +16,9 @@ import tools.jackson.databind.ObjectMapper;
 public class IngestionService {
 
     private final VectorStore vectorStore;
-
     private final ObjectMapper objectMapper;
 
     public void ingest(DocumentDescriptor documentDescriptor) {
-
         final var metadata = objectMapper.convertValue(documentDescriptor, new TypeReference<Map<String, Object>>() {
         });
         metadata.remove("content");

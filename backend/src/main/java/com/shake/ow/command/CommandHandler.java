@@ -2,7 +2,7 @@ package com.shake.ow.command;
 
 public interface CommandHandler {
 
-    String commandId();
+    CommandDescriptor commandDesc();
 
     CommandResult handle(String arg, String conversationId, String tone);
 }

@@ -15,13 +15,10 @@ public class CommandRegistry {
     private final List<CommandDescriptor> descriptors;
     private final Map<String, CommandHandler> handlers;
 
-    public CommandRegistry(ToneRegistry toneRegistry, List<CommandHandler> handlers) {
-        this.descriptors = List.of(
-                new CommandDescriptor("tone", "set response tone", toneRegistry.toToneParams()),
-                new CommandDescriptor("contact", "show contact details", List.of())
-        );
+    public CommandRegistry(List<CommandHandler> handlers) {
+        this.descriptors = handlers.stream().map(CommandHandler::commandDesc).toList();
         this.handlers = handlers.stream()
-                                .collect(Collectors.toMap(CommandHandler::commandId, identity()));
+                                .collect(Collectors.toMap(commandHandler -> commandHandler.commandDesc().command(), identity()));
     }
 
     public List<CommandDescriptor> getAll() {

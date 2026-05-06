@@ -6,17 +6,20 @@ import org.springframework.stereotype.Component;
 
 import com.shake.ow.api.Cookies;
 
-import lombok.RequiredArgsConstructor;
-
 @Component
-@RequiredArgsConstructor
 public class ToneCommandHandler implements CommandHandler {
 
     private final ToneRegistry toneRegistry;
+    private final CommandDescriptor commandDescriptor;
+
+    public ToneCommandHandler(ToneRegistry toneRegistry) {
+        this.toneRegistry = toneRegistry;
+        this.commandDescriptor = new CommandDescriptor("tone", "set response tone", toneRegistry.toToneParams());
+    }
 
     @Override
-    public String commandId() {
-        return "tone";
+    public CommandDescriptor commandDesc() {
+        return commandDescriptor;
     }
 
     @Override
@@ -25,8 +28,8 @@ public class ToneCommandHandler implements CommandHandler {
                            .map(descr -> new CommandResult("tone set to " + descr.id(), Cookies.tone(descr.id())))
                            .orElseGet(() -> {
                                var valid = toneRegistry.toToneParams().stream()
-                                                          .map(CommandParameter::parameter)
-                                                          .collect(Collectors.joining(", "));
+                                                       .map(CommandParameter::parameter)
+                                                       .collect(Collectors.joining(", "));
                                return new CommandResult("Unknown tone: '%s'. Valid options: %s.".formatted(arg, valid));
                            });
     }

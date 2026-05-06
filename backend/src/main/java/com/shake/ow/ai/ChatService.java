@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -55,30 +56,24 @@ public class ChatService {
 
     public String chat(String message, String conversationId, String tone) {
         log.debug("Chat: {} (tone: {})", message, tone);
-        final var toneDescriptor = toneRegistry.resolveOrDefault(tone);
-
-        final var content = chatClient.prompt()
-                                      .user(message)
-                                      .system(SYSTEM_TEMPLATE.render(Map.of("date", LocalDate.now(), "tone", toneDescriptor.prompt())))
-                                      .advisors(a -> a.param(ChatMemory.CONVERSATION_ID,
-                                              UUID.nameUUIDFromBytes((conversationId + ":" + toneDescriptor.id()).getBytes(StandardCharsets.UTF_8)).toString()))
-                                      .call()
-                                      .content();
+        final var content = prepareCall(message, conversationId, tone).call().content();
         log.debug("Chat reply: {}", content);
         return content;
     }
 
     public Flux<String> stream(String message, String conversationId, String tone) {
         log.debug("Stream: {} (tone: {})", message, tone);
-        final var toneDescriptor = toneRegistry.resolveOrDefault(tone);
+        return prepareCall(message, conversationId, tone).stream().content();
+    }
 
+    private ChatClient.@NonNull ChatClientRequestSpec prepareCall(String message, String conversationId,
+            String tone) {
+        final var toneDescriptor = toneRegistry.resolveOrDefault(tone);
         return chatClient.prompt()
                          .user(message)
                          .system(SYSTEM_TEMPLATE.render(Map.of("date", LocalDate.now(), "tone", toneDescriptor.prompt())))
                          .advisors(a -> a.param(ChatMemory.CONVERSATION_ID,
-                                 UUID.nameUUIDFromBytes((conversationId + ":" + toneDescriptor.id()).getBytes(StandardCharsets.UTF_8)).toString()))
-                         .stream()
-                         .content();
+                                 UUID.nameUUIDFromBytes((conversationId + ":" + toneDescriptor.id()).getBytes(StandardCharsets.UTF_8)).toString()));
     }
 
 }

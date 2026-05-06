@@ -11,7 +11,7 @@ class ToneCommandHandlerTest {
 
     @Test
     void commandId_isTone() {
-        assertThat(handler.commandId()).isEqualTo("tone");
+        assertThat(handler.commandDesc().command()).isEqualTo("tone");
     }
 
     @Test

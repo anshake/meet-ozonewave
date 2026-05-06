@@ -19,6 +19,6 @@ public class ProfileDocument {
     @Id
     private UUID id;
 
-    @Column(name = "content")
+    @Column
     private String content;
 }

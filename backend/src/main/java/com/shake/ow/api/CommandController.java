@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.shake.ow.command.CommandDescriptor;
 import com.shake.ow.command.CommandRegistry;
 import com.shake.ow.command.CommandRequest;
-import com.shake.ow.command.CommandResult;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,7 @@ public class CommandController {
             @RequestHeader("ConversationId") String conversationId,
             @RequestHeader(value = "X-Tone", required = false, defaultValue = "") String tone,
             HttpServletResponse response) {
-        CommandResult result = cmdRegistry.find(request.command()).handle(request.arg(), conversationId, tone);
+        final var result = cmdRegistry.find(request.command()).handle(request.arg(), conversationId, tone);
         if (result.cookie() != null) {
             response.addHeader(HttpHeaders.SET_COOKIE, result.cookie().toString());
         }

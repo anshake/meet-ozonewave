@@ -3,16 +3,21 @@
 
 @config "../tailwind.config.js";
 
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: #0d1117; }
-body { font-family: 'Geist Mono', monospace; color: #c9d1d9; }
+/* Element defaults belong in @layer base so component/utility classes (e.g.
+   .btn-primary, text-amber) correctly override them — unlayered rules would
+   otherwise win over everything Tailwind emits. */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0d1117; }
+  body { font-family: 'Geist Mono', monospace; color: #c9d1d9; }
 
-a { color: #6b82a8; }
-a:hover { color: #4e6488; }
+  a { color: #6b82a8; }
+  a:hover { color: #4e6488; }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0d1117; }
-::-webkit-scrollbar-thumb { background: #21262d; border-radius: 3px; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #21262d; border-radius: 3px; }
+}
 
 .kbd {
   display: inline-flex;
@@ -24,4 +29,31 @@ a:hover { color: #4e6488; }
   font-size: 11px;
   font-family: inherit;
   margin-right: 4px;
+}
+
+/* Shared UI classes built from the design tokens (tailwind.config.js), used by
+   both the public components and the admin so they stay visually in sync. */
+@layer components {
+  /* secondary / ghost button */
+  .btn {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-md border border-border2 bg-bg2 text-body font-mono text-xs cursor-pointer whitespace-nowrap transition-colors hover:border-dim hover:text-text disabled:opacity-45 disabled:cursor-not-allowed;
+  }
+
+  /* primary / accent button (canonical: terminal Send button) */
+  .btn-primary {
+    @apply inline-flex items-center gap-1.5 bg-amber text-[#1a1205] border-0 px-3 py-1.5 rounded font-mono text-xs font-semibold tracking-wide cursor-pointer transition-colors hover:bg-amber2 active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  /* destructive ghost button */
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-md border border-border2 bg-bg2 text-body font-mono text-xs cursor-pointer whitespace-nowrap transition-colors hover:border-red hover:text-red disabled:opacity-45 disabled:cursor-not-allowed;
+  }
+
+  .input {
+    @apply w-full bg-bg border border-border2 rounded-lg px-3 py-2.5 text-[12.5px] text-text font-mono outline-none placeholder:text-dim focus:border-amber focus:shadow-[0_0_0_3px_rgba(240,168,50,0.10)];
+  }
+
+  .field-label {
+    @apply text-muted text-[10.5px] tracking-wider uppercase mb-2 flex justify-between items-center gap-2.5 whitespace-nowrap;
+  }
 }

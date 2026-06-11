@@ -14,6 +14,7 @@ export default {
         amber2:  '#c47d0e',
         teal:    '#6b82a8',
         teal2:   '#4e6488',
+        red:     '#e07a5f',
         text:    '#e6edf3',
         body:    '#c9d1d9',
         muted:   '#8b949e',

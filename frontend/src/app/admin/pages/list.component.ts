@@ -1,13 +1,13 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
-import {Chunk, ChunkStatus, CONTENT_TYPES, ContentTypeId, ctLabel, isDated} from '../kb-data';
+import {Chunk, CONTENT_TYPES, ContentTypeId, ctLabel, isDated} from '../kb-data';
 import {KbDataService} from '../kb-data.service';
 import {IconComponent} from '../shared/icon.component';
 import {CtSelectComponent} from '../shared/ct-select.component';
 import {SkillsEditorComponent} from '../shared/skills-editor.component';
 
 // amber is the primary accent, so status dots use distinct hues (teal/amber/red).
-const STATUS_COLOR: Record<ChunkStatus, string> = {indexed: '#6b82a8', pending: '#f0a832', stale: '#e07a5f'};
+// const STATUS_COLOR: Record<ChunkStatus, string> = {indexed: '#6b82a8', pending: '#f0a832', stale: '#e07a5f'};
 
 const ROW = 'grid grid-cols-[26px_1fr_140px] gap-3.5 items-center px-6 py-[13px] border-b border-border';
 const CK = 'w-[15px] h-[15px] border rounded flex items-center justify-center cursor-pointer text-[#1a1205]';
@@ -19,143 +19,7 @@ const CK = 'w-[15px] h-[15px] border rounded flex items-center justify-center cu
   imports: [RouterLink, IconComponent, CtSelectComponent, SkillsEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {class: 'flex-1 flex flex-col min-w-0'},
-  template: `
-    <div class="h-[58px] shrink-0 border-b border-border flex items-center gap-3.5 px-6">
-      <div class="flex-1"></div>
-      <a class="btn-primary" routerLink="/admin/embeddings/new"><va-icon name="plus" [size]="13"/>Add embedding</a>
-    </div>
-
-    <div class="flex-1 flex min-h-0 max-lg:flex-col">
-      <div class="flex-1 flex flex-col min-w-0">
-        <div class="flex items-center gap-[7px] px-6 py-3.5 border-b border-border flex-wrap">
-          @for (c of filters; track c.id) {
-            <button (click)="ct.set(c.id)"
-              [class]="'px-2.5 py-1.5 rounded-full border font-mono text-xs cursor-pointer bg-transparent whitespace-nowrap ' +
-                (c.id === ct() ? 'border-amber/35 text-amber bg-amber/10' : 'border-border2 text-muted hover:text-body')">
-              {{ c.label }}<span class="opacity-60 ml-1.5">{{ count(c.id) }}</span>
-            </button>
-          }
-        </div>
-
-        @if (checked().size > 0) {
-          <div class="flex items-center gap-3 px-6 py-2.5 border-b border-border bg-amber/10 text-amber text-xs">
-            <span><b>{{ checked().size }}</b> selected</span>
-            <span class="flex-1"></span>
-            <button class="btn" (click)="reembed(checkedIds())"><va-icon name="redo" [size]="13"/>Re-embed</button>
-            <button class="btn-danger" (click)="remove(checkedIds())"><va-icon name="trash" [size]="13"/>Delete</button>
-            <button class="btn" (click)="checked.set(emptySet())">Clear</button>
-          </div>
-        }
-
-        <div class="flex-1 overflow-auto">
-          <div [class]="row + ' sticky top-0 bg-bg3 z-[1] text-muted text-[11px] tracking-wide uppercase'">
-            <div [class]="ck + (allChecked() ? ' bg-amber border-amber' : ' border-border2')" (click)="toggleAll()">
-              @if (allChecked()) {<va-icon name="check" [size]="11"/>}
-            </div>
-            <div>Embedding</div>
-            <div>Content type</div>
-          </div>
-
-          @for (c of view(); track c.id) {
-            <div (click)="selId.set(c.id)"
-              [class]="row + ' cursor-pointer ' + (c.id === selId() ? 'bg-amber/10 shadow-[inset_2px_0_0_#f0a832]' : 'hover:bg-white/[0.025]')">
-              <div [class]="ck + (checked().has(c.id) ? ' bg-amber border-amber' : ' border-border2')"
-                   (click)="toggleCheck(c.id, $event)">
-                @if (checked().has(c.id)) {<va-icon name="check" [size]="11"/>}
-              </div>
-              <div class="min-w-0">
-                <div class="text-text text-[13px] font-medium mb-[3px] whitespace-nowrap overflow-hidden text-ellipsis">{{ c.title }}</div>
-                <div class="text-muted text-[11px] flex gap-2.5 items-center">
-                  <span class="text-dim">{{ c.id }}</span>
-                  <span class="flex gap-1.5 flex-wrap">
-                    @for (s of c.skills.slice(0, 3); track s) {
-                      <span class="text-[10.5px] text-amber bg-amber/10 border border-amber/35 rounded-[5px] px-1.5 py-px whitespace-nowrap">{{ s }}</span>
-                    }
-                    @if (c.skills.length > 3) {<span class="text-dim">+{{ c.skills.length - 3 }}</span>}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border2 bg-white/[0.02] text-[11.5px] text-body whitespace-nowrap">
-                  <span class="w-1.5 h-1.5 rounded-sm shrink-0" [style.background]="statusColor(c.status)"></span>{{ ctLabel(c.contentType) }}
-                </span>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <div class="hidden lg:block w-1.5 shrink-0 cursor-col-resize self-stretch bg-transparent hover:bg-amber/30 active:bg-amber/40 transition-colors -mr-px relative z-[2]"
-           (pointerdown)="onResizeStart($event)"></div>
-
-      <aside class="w-full lg:shrink-0 flex flex-col bg-bg3 border-t lg:border-t-0 lg:border-l border-border min-h-0 lg:w-[var(--panel-w,408px)]"
-             [style.--panel-w]="panelWidth() + 'px'">
-        @if (sel(); as s) {
-          <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-            <span class="text-text text-[13px] font-semibold">{{ s.id }}</span>
-            <button class="w-[26px] h-[26px] rounded-md border border-border2 bg-transparent text-muted cursor-pointer flex items-center justify-center hover:text-text hover:border-dim" (click)="selId.set(null)"><va-icon name="close" [size]="12"/></button>
-          </div>
-          <div class="flex-1 overflow-auto px-5 py-[18px] flex flex-col gap-4">
-            <div>
-              <div class="field-label"><span>Content</span><span class="text-amber">editable</span></div>
-              <div class="bg-bg border border-border2 rounded-[9px] px-3.5 py-3 text-text font-mono text-[12.5px] leading-[1.65] min-h-[150px] whitespace-pre-wrap outline-none focus:border-amber focus:shadow-[0_0_0_3px_rgba(240,168,50,0.10)]"
-                   contenteditable (blur)="commitContent(s.id, $event)">{{ s.content }}</div>
-            </div>
-            <div>
-              <div class="field-label">Content type</div>
-              <va-ct-select [value]="s.contentType" (changed)="kb.update(s.id, {contentType: $event})"/>
-            </div>
-            @if (isDated(s.contentType)) {
-              <div>
-                <div class="field-label">Client</div>
-                <input class="input"[value]="s.client || ''" placeholder="Client / employer"
-                       (input)="kb.update(s.id, {client: $any($event.target).value || null})"/>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <div class="field-label">Start</div>
-                  <input type="month" class="input"[value]="s.startDate || ''"
-                         (input)="kb.update(s.id, {startDate: $any($event.target).value || null})"/>
-                </div>
-                <div>
-                  <div class="field-label">End</div>
-                  <input type="month" class="input"[value]="s.endDate || ''"
-                         (input)="kb.update(s.id, {endDate: $any($event.target).value || null})"/>
-                </div>
-              </div>
-            } @else {
-              <div class="text-muted text-[11px] flex gap-2 items-start px-3 py-2.5 bg-white/[0.02] border border-border2 rounded-md leading-[1.45]">
-                <va-icon name="dim" [size]="13"/>
-                <span><b class="text-body">client</b>, <b class="text-body">startDate</b> &amp;
-                  <b class="text-body">endDate</b> are <span class="text-red">null</span> for {{ ctLabel(s.contentType) }}.</span>
-              </div>
-            }
-            <div>
-              <div class="field-label">Skills</div>
-              <va-skills [skills]="s.skills" (changed)="kb.update(s.id, {skills: $event})"/>
-            </div>
-            <div class="grid grid-cols-2 gap-x-4 gap-y-3.5">
-              <div><div class="text-muted text-[11px] mb-[3px]">Tokens</div><div class="text-body text-xs flex items-center gap-1.5">{{ s.tokens }}</div></div>
-              <div><div class="text-muted text-[11px] mb-[3px]">Vector</div><div class="text-body text-xs flex items-center gap-1.5">1536d · cosine</div></div>
-              <div><div class="text-muted text-[11px] mb-[3px]">Status</div><div class="text-body text-xs flex items-center gap-1.5"><span class="w-[7px] h-[7px] rounded-full inline-block" [style.background]="statusColor(s.status)" [style.boxShadow]="'0 0 8px ' + statusColor(s.status)"></span>{{ s.status }}</div></div>
-              <div><div class="text-muted text-[11px] mb-[3px]">Updated</div><div class="text-body text-xs flex items-center gap-1.5">{{ s.updated }}</div></div>
-            </div>
-            <div class="text-amber text-[11px] flex gap-2 items-start px-3 py-2.5 bg-amber/[0.07] border border-amber/20 rounded-md leading-[1.45]">
-              <va-icon name="embed" [size]="13"/>Editing marks this embedding stale — re-embed to update what the assistant retrieves.
-            </div>
-          </div>
-          <div class="px-5 py-3.5 border-t border-border flex gap-2.5">
-            <button class="btn-danger flex-1 justify-center" (click)="remove([s.id])"><va-icon name="trash" [size]="13"/>Delete</button>
-            <button class="btn-primary flex-1 justify-center" (click)="reembed([s.id])"><va-icon name="redo" [size]="13"/>Save &amp; re-embed</button>
-          </div>
-        } @else {
-          <div class="flex-1 flex flex-col items-center justify-center gap-3 text-muted text-center p-10">
-            <va-icon name="book" [size]="28" class="text-dim"/><div>Select an embedding to view and edit its document.</div>
-          </div>
-        }
-      </aside>
-    </div>
-  `,
+  templateUrl: './list.component.html',
 })
 export class AdminListComponent {
   readonly kb = inject(KbDataService);
@@ -163,7 +27,7 @@ export class AdminListComponent {
   readonly row = ROW;
   readonly ck = CK;
 
-  readonly filters: {id: ContentTypeId | 'all'; label: string}[] =
+  readonly filters: { id: ContentTypeId | 'all'; label: string }[] =
     [{id: 'all', label: 'All'}, ...CONTENT_TYPES.map(c => ({id: c.id, label: c.label}))];
 
   readonly panelWidth = signal(408);
@@ -173,7 +37,7 @@ export class AdminListComponent {
 
   readonly ctLabel = ctLabel;
   readonly isDated = isDated;
-  readonly statusColor = (s: ChunkStatus) => STATUS_COLOR[s];
+  // readonly statusColor = (s: ChunkStatus) => STATUS_COLOR[s];
   readonly emptySet = () => new Set<string>();
 
   readonly view = computed(() => {

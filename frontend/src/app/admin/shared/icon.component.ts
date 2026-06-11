@@ -27,15 +27,7 @@ const PATHS: Record<string, string> = {
   selector: 'va-icon',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <svg [attr.width]="size()" [attr.height]="size()" viewBox="0 0 16 16" fill="none"
-         stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
-         class="inline-flex shrink-0">
-      @for (seg of segments(); track $index) {
-        <path [attr.d]="seg"></path>
-      }
-    </svg>
-  `,
+  templateUrl: './icon.component.html',
 })
 export class IconComponent {
   readonly name = input.required<string>();

@@ -6,9 +6,9 @@
     <va-icon name="chev" [size]="11" class="ml-auto opacity-70 rotate-90"/>
   </button>
   @if (open()) {
-    <div class="absolute top-[calc(100%+5px)] left-0 right-0 z-20 bg-bg2 border border-border2 rounded-[9px] p-[5px] shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
+    <div class="absolute top-[calc(100%+5px)] left-0 right-0 z-20 bg-bg2 border border-border2 rounded-[9px] p-1.25 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
       @for (c of types; track c.id) {
-        <button class="flex items-center gap-2.5 w-full bg-transparent border-0 cursor-pointer text-body font-mono text-[12.5px] px-2.5 py-2 rounded-md text-left whitespace-nowrap hover:bg-white/[0.04]"
+        <button class="flex items-center gap-2.5 w-full bg-transparent border-0 cursor-pointer text-body font-mono text-[12.5px] px-2.5 py-2 rounded-md text-left whitespace-nowrap hover:bg-white/4"
                 [style.background]="c.id === value() ? 'rgba(240,168,50,0.10)' : ''" (click)="pick(c.id)">
           <span class="text-[10px] text-muted tracking-tight shrink-0">{{ c.id }}</span>
           <span class="text-text overflow-hidden text-ellipsis">{{ c.label }}</span>

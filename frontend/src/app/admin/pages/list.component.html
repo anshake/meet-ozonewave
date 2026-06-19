@@ -1,4 +1,4 @@
-<div class="h-[58px] shrink-0 border-b border-border flex items-center gap-3.5 px-6">
+<div class="h-14.5 shrink-0 border-b border-border flex items-center gap-3.5 px-6">
   <div class="flex-1"></div>
   <a class="btn-primary" routerLink="/admin/embeddings/new">
     <va-icon name="plus" [size]="13"/>
@@ -7,7 +7,7 @@
 
 <div class="flex-1 flex min-h-0 max-lg:flex-col">
   <div class="flex-1 flex flex-col min-w-0">
-    <div class="flex items-center gap-[7px] px-6 py-3.5 border-b border-border flex-wrap">
+    <div class="flex items-center gap-1.75 px-6 py-3.5 border-b border-border flex-wrap">
       @for (c of filters; track c.id) {
         <button (click)="ct.set(c.id)"
                 [class]="'px-2.5 py-1.5 rounded-full border font-mono text-xs cursor-pointer bg-transparent whitespace-nowrap ' +
@@ -34,7 +34,7 @@
     }
 
     <div class="flex-1 overflow-auto">
-      <div [class]="row + ' sticky top-0 bg-bg3 z-[1] text-muted text-[11px] tracking-wide uppercase'">
+      <div [class]="row + ' sticky top-0 bg-bg3 z-1 text-muted text-[11px] tracking-wide uppercase'">
         <div [class]="ck + (allChecked() ? ' bg-amber border-amber' : ' border-border2')" (click)="toggleAll()">
           @if (allChecked()) {
             <va-icon name="check" [size]="11"/>
@@ -46,7 +46,7 @@
 
       @for (c of view(); track c.id) {
         <div (click)="selId.set(c.id)"
-             [class]="row + ' cursor-pointer ' + (c.id === selId() ? 'bg-amber/10 shadow-[inset_2px_0_0_#f0a832]' : 'hover:bg-white/[0.025]')">
+             [class]="row + ' cursor-pointer ' + (c.id === selId() ? 'bg-amber/10 shadow-[inset_2px_0_0_#f0a832]' : 'hover:bg-white/2.5')">
           <div [class]="ck + (checked().has(c.id) ? ' bg-amber border-amber' : ' border-border2')"
                (click)="toggleCheck(c.id, $event)">
             @if (checked().has(c.id)) {
@@ -55,7 +55,7 @@
           </div>
           <div class="min-w-0">
             <div
-              class="text-text text-[13px] font-medium mb-[3px] whitespace-nowrap overflow-hidden text-ellipsis">{{ c.title }}
+              class="text-text text-[13px] font-medium mb-0.75 whitespace-nowrap overflow-hidden text-ellipsis">{{ c.title }}
             </div>
             <div class="text-muted text-[11px] flex gap-2.5 items-center">
               <span class="text-dim">{{ c.id }}</span>
@@ -72,7 +72,7 @@
           </div>
           <div>
             <span
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border2 bg-white/[0.02] text-[11.5px] text-body whitespace-nowrap">
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border2 bg-white/2 text-[11.5px] text-body whitespace-nowrap">
               <span class="w-1.5 h-1.5 rounded-sm shrink-0"
                     [style.background]="'#6b82a8'"></span>{{ ctLabel(c.contentType) }}
             </span>
@@ -83,26 +83,26 @@
   </div>
 
   <div
-    class="hidden lg:block w-1.5 shrink-0 cursor-col-resize self-stretch bg-transparent hover:bg-amber/30 active:bg-amber/40 transition-colors -mr-px relative z-[2]"
+    class="hidden lg:block w-1.5 shrink-0 cursor-col-resize self-stretch bg-transparent hover:bg-amber/30 active:bg-amber/40 transition-colors -mr-px relative z-2"
     (pointerdown)="onResizeStart($event)"></div>
 
   <aside
-    class="w-full lg:shrink-0 flex flex-col bg-bg3 border-t lg:border-t-0 lg:border-l border-border min-h-0 lg:w-[var(--panel-w,408px)]"
+    class="w-full lg:shrink-0 flex flex-col bg-bg3 border-t lg:border-t-0 lg:border-l border-border min-h-0 lg:w-(--panel-w,408px)"
     [style.--panel-w]="panelWidth() + 'px'">
     @if (sel(); as s) {
       <div class="px-5 py-4 border-b border-border flex items-center justify-between">
         <span class="text-text text-[13px] font-semibold">{{ s.id }}</span>
         <button
-          class="w-[26px] h-[26px] rounded-md border border-border2 bg-transparent text-muted cursor-pointer flex items-center justify-center hover:text-text hover:border-dim"
+          class="w-6.5 h-6.5 rounded-md border border-border2 bg-transparent text-muted cursor-pointer flex items-center justify-center hover:text-text hover:border-dim"
           (click)="selId.set(null)">
           <va-icon name="close" [size]="12"/>
         </button>
       </div>
-      <div class="flex-1 overflow-auto px-5 py-[18px] flex flex-col gap-4">
+      <div class="flex-1 overflow-auto px-5 py-4.5 flex flex-col gap-4">
         <div>
           <div class="field-label"><span>Content</span></div>
           <div
-            class="bg-bg border border-border2 rounded-[9px] px-3.5 py-3 text-text font-mono text-[12.5px] leading-[1.65] min-h-[150px] whitespace-pre-wrap outline-none focus:border-amber focus:shadow-[0_0_0_3px_rgba(240,168,50,0.10)]"
+            class="bg-bg border border-border2 rounded-[9px] px-3.5 py-3 text-text font-mono text-[12.5px] leading-[1.65] min-h-37.5 whitespace-pre-wrap outline-none focus:border-amber focus:shadow-[0_0_0_3px_rgba(240,168,50,0.10)]"
             contenteditable (blur)="commitContent(s.id, $event)">{{ s.content }}
           </div>
         </div>
@@ -130,7 +130,7 @@
           </div>
         } @else {
           <div
-            class="text-muted text-[11px] flex gap-2 items-start px-3 py-2.5 bg-white/[0.02] border border-border2 rounded-md leading-[1.45]">
+            class="text-muted text-[11px] flex gap-2 items-start px-3 py-2.5 bg-white/2 border border-border2 rounded-md leading-[1.45]">
             <va-icon name="dim" [size]="13"/>
             <span><b class="text-body">client</b>, <b class="text-body">startDate</b> &amp;
               <b class="text-body">endDate</b> are <span class="text-red">null</span> for {{ ctLabel(s.contentType) }}.</span>
@@ -142,15 +142,15 @@
         </div>
         <div class="grid grid-cols-2 gap-x-4 gap-y-3.5">
           <div>
-            <div class="text-muted text-[11px] mb-[3px]">Tokens</div>
+            <div class="text-muted text-[11px] mb-0.75">Tokens</div>
             <div class="text-body text-xs flex items-center gap-1.5">{{ s.tokens }}</div>
           </div>
           <div>
-            <div class="text-muted text-[11px] mb-[3px]">Vector</div>
+            <div class="text-muted text-[11px] mb-0.75">Vector</div>
             <div class="text-body text-xs flex items-center gap-1.5">1536d · cosine</div>
           </div>
           <div>
-            <div class="text-muted text-[11px] mb-[3px]">Updated</div>
+            <div class="text-muted text-[11px] mb-0.75">Updated</div>
             <div class="text-body text-xs flex items-center gap-1.5">{{ s.updated }}</div>
           </div>
         </div>

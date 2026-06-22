@@ -1,24 +1,11 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
-import {Chunk, ctLabel} from '../kb-data';
-import {KbDataService} from '../kb-data.service';
+import {AdminService} from '../admin.service';
+import {contentTypeLabel} from '../profile-document.model';
+import {RetrievalTestResponse} from '../retrieval-test.model';
 import {IconComponent} from '../shared/icon.component';
 
-interface RankedChunk extends Chunk {
-  score: number;
-  rank: number;
-  inK: boolean;
-  passT: boolean;
-  inCtx: boolean;
-}
-
-interface AnswerPart {
-  text: string;
-  cite: number | null;
-}
-
-// Test embeddings — retrieval playground. Ranks chunks by stored cosine
-// similarity for the active query, applies top-K + threshold cutoffs, and shows
-// the synthesised answer with inline citations. Pure derivation (no fetch yet).
+// Test embeddings — drives the live assistant for a query and shows a trace of which entries each tool
+// placed into the prompt (with cosine scores for the similarity branch), plus the model's real answer.
 @Component({
   selector: 'app-admin-test',
   standalone: true,
@@ -28,62 +15,47 @@ interface AnswerPart {
   templateUrl: './test.component.html',
 })
 export class AdminTestComponent {
-  private kb = inject(KbDataService);
+  private readonly admin = inject(AdminService);
 
-  readonly queries = this.kb.queries;
-  readonly qIdx = signal(0);
-  readonly text = signal(this.kb.queries[0].q);
-  readonly topK = signal(5);
-  readonly threshold = signal(0.30);
-  readonly scoreFmt = signal<'raw' | 'percent'>('raw');
+  readonly contentTypeLabel = contentTypeLabel;
 
-  readonly ctLabel = ctLabel;
-  readonly max = Math.max;
-  readonly min = Math.min;
+  readonly query = signal('');
+  readonly running = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly result = signal<RetrievalTestResponse | null>(null);
 
-  readonly ranked = computed<RankedChunk[]>(() => {
-    const q = this.queries[this.qIdx()];
-    const k = this.topK();
-    const th = this.threshold();
-    return this.kb.chunks()
-      .map(c => ({...c, score: q.scores[c.id] ?? 0}))
-      .sort((a, b) => b.score - a.score)
-      .map((c, i) => ({...c, rank: i, inK: i < k, passT: c.score >= th}))
-      .map(c => ({...c, inCtx: c.inK && c.passT}));
-  });
+  readonly totalEntries = computed(() =>
+    (this.result()?.toolCalls ?? []).reduce((sum, c) => sum + c.entries.length, 0));
 
-  readonly inCtx = computed(() => this.ranked().filter(c => c.inCtx));
-  readonly ctxTokens = computed(() => this.inCtx().reduce((s, c) => s + c.tokens, 0));
-
-  // citation number (1-based) for the first three in-context chunks
-  private readonly citeIdx = computed(() => {
-    const map = new Map<string, number>();
-    this.inCtx().slice(0, 3).forEach((c, i) => map.set(c.id, i + 1));
-    return map;
-  });
-
-  // answer split on sentence boundaries; cite markers appended after first N sentences
-  readonly answerParts = computed<AnswerPart[]>(() => {
-    const cites = this.inCtx().slice(0, 3);
-    const parts = this.queries[this.qIdx()].answer.split(/(?<=\. )/);
-    return parts.map((text, i) => ({text, cite: cites[i] ? i + 1 : null}));
-  });
-
-  fmt(v: number): string {
-    return this.scoreFmt() === 'percent' ? Math.round(v * 100) + '%' : v.toFixed(2);
+  run(): void {
+    const q = this.query().trim();
+    if (!q || this.running()) {
+      return;
+    }
+    this.running.set(true);
+    this.error.set(null);
+    this.result.set(null); // drop the previous run so its DOM is rebuilt, not reused
+    this.admin.testEmbeddings(q).subscribe({
+      next: res => {
+        this.result.set(res);
+        this.running.set(false);
+      },
+      error: () => {
+        this.error.set('Request failed — check the backend is running.');
+        this.running.set(false);
+      },
+    });
   }
 
-  citeLabel(id: string): string {
-    const n = this.citeIdx().get(id);
-    return n ? `[${n}] ` : '';
+  fmt(score: number): string {
+    return score.toFixed(3);
   }
 
-  cap(s: string, n: number): string {
-    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  firstLine(content: string): string {
+    return content.split('\n').map(l => l.trim()).find(l => l.length > 0) ?? content;
   }
 
-  pick(i: number): void {
-    this.qIdx.set(i);
-    this.text.set(this.queries[i].q);
+  snippet(content: string, n: number): string {
+    return content.length > n ? content.slice(0, n).trim() + '…' : content;
   }
 }

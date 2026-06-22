@@ -1,130 +1,112 @@
 <div class="flex-1 overflow-auto flex flex-col">
+  <!-- Query -->
   <div class="px-6 pt-5.5 pb-4.5 border-b border-border">
-    <div class="text-muted text-[10.5px] tracking-[0.8px] uppercase mb-2.75 flex items-center gap-2 whitespace-nowrap"><va-icon name="search" [size]="13"/>Query — runs against the live vector store</div>
+    <div class="text-muted text-[10.5px] tracking-[0.8px] uppercase mb-2.75 flex items-center gap-2 whitespace-nowrap"><va-icon name="search" [size]="13"/>Query — runs against the live assistant</div>
     <div class="flex items-center gap-2.75 bg-bg2 border border-amber/35 rounded-[10px] px-3.5 py-3 shadow-[0_0_0_3px_rgba(240,168,50,0.05)]">
       <span class="text-amber text-[15px]">❯</span>
       <input class="flex-1 bg-transparent border-0 outline-none text-text font-mono text-sm placeholder:text-dim"
-             [value]="text()" (input)="text.set($any($event.target).value)"
+             [value]="query()" (input)="query.set($any($event.target).value)" (keydown.enter)="run()"
              placeholder="Ask what the assistant should answer…"/>
-      <button class="btn-primary"><va-icon name="play" [size]="12"/>Run</button>
-    </div>
-    <div class="flex items-center gap-2 mt-3 flex-wrap">
-      <span class="text-muted text-[11px]">saved:</span>
-      @for (qq of queries; track qq.id; let i = $index) {
-        <button (click)="pick(i)"
-          [class]="'px-2.5 py-1.5 rounded-full border border-dashed font-mono text-[11.5px] bg-transparent whitespace-nowrap overflow-hidden text-ellipsis max-w-75 cursor-pointer ' +
-            (i === qIdx() ? 'border-solid bg-amber/10 border-amber/35 text-amber' : 'border-border2 text-muted hover:text-body hover:border-amber')">{{ qq.q }}</button>
-      }
-    </div>
-  </div>
-
-  <div class="flex items-center gap-6.5 px-6 py-3.5 border-b border-border bg-bg3 flex-wrap">
-    <div class="flex items-center gap-2.75">
-      <span class="text-muted text-[11px] tracking-wide uppercase">Top-K</span>
-      <div class="flex items-center border border-border2 rounded-md overflow-hidden">
-        <button class="w-7 h-7 bg-bg2 border-0 text-body cursor-pointer font-mono text-sm hover:bg-border hover:text-text" (click)="topK.set(max(1, topK() - 1))">−</button>
-        <span class="min-w-8.5 text-center text-text text-[13px] border-l border-r border-border2 py-1.25">{{ topK() }}</span>
-        <button class="w-7 h-7 bg-bg2 border-0 text-body cursor-pointer font-mono text-sm hover:bg-border hover:text-text" (click)="topK.set(min(9, topK() + 1))">+</button>
-      </div>
-    </div>
-    <div class="flex items-center gap-2.75">
-      <span class="text-muted text-[11px] tracking-wide uppercase">Min similarity</span>
-      <div class="flex items-center gap-2.5">
-        <input type="range" min="0" max="0.9" step="0.01" class="accent-amber w-32.5 cursor-pointer" [value]="threshold()"
-               (input)="threshold.set(+$any($event.target).value)"/>
-        <span class="text-amber text-[13px] min-w-8.5">{{ fmt(threshold()) }}</span>
-      </div>
-    </div>
-    <div class="flex items-center gap-2.75">
-      <span class="text-muted text-[11px] tracking-wide uppercase">Metric</span>
-      <span class="text-text text-[13px]">cosine</span>
-    </div>
-    <div class="ml-auto text-muted text-[11.5px] whitespace-nowrap">
-      <b class="text-amber">{{ inCtx().length }}</b> of {{ ranked().length }} chunks sent to context · <b class="text-amber">{{ ctxTokens() }}</b> tokens
-    </div>
-  </div>
-
-  <div class="flex-1 flex min-h-0 max-lg:flex-col">
-    <div class="flex-1 overflow-auto px-6 py-4.5 flex flex-col gap-2.75 min-w-0">
-      <div class="text-muted text-[11px] tracking-wide uppercase mb-0.75">Retrieved — ranked by cosine similarity ↓</div>
-      @for (c of ranked(); track c.id; let i = $index) {
-        @if (i === topK() && topK() < ranked().length) {
-          <div class="flex items-center gap-3 text-amber text-[10.5px] tracking-wide uppercase my-0.75"><span class="flex-1 border-t border-dashed border-amber/40"></span>top-K cutoff · K={{ topK() }}<span class="flex-1 border-t border-dashed border-amber/40"></span></div>
+      <button class="btn-primary" [disabled]="running() || !query().trim()" (click)="run()">
+        @if (running()) {
+          <va-icon name="redo" [size]="12" class="animate-spin"/>Running…
+        } @else {
+          <va-icon name="play" [size]="12"/>Run
         }
-        <div [class]="'grid grid-cols-[54px_1fr] gap-3.75 bg-bg2 border rounded-[10px] px-3.5 py-3 ' + (c.inCtx ? 'border-amber/35' : 'opacity-50 border-border')">
-          <div class="flex flex-col items-center gap-1.5">
-            <div [class]="'text-sm font-semibold ' + (c.inCtx ? 'text-amber' : 'text-muted')">{{ fmt(c.score) }}</div>
-            <div class="w-1.5 flex-1 min-h-8.5 bg-border2 rounded relative overflow-hidden">
-              <i class="absolute left-0 right-0 bottom-0" [class]="c.inCtx ? 'bg-amber shadow-[0_0_7px_#f0a832]' : 'bg-dim'" [style.height.%]="c.score * 100"></i>
-            </div>
-            <div class="text-muted text-[10px]">#{{ i + 1 }}</div>
-          </div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-2.5 mb-1.5">
-              <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-text text-[13px] font-medium">{{ c.title }}</span>
-              @if (c.inCtx) {
-                <span class="ml-auto text-[10.5px] px-2.5 py-0.75 rounded-full flex items-center gap-1.5 whitespace-nowrap bg-amber/10 text-amber border border-amber/35"><va-icon name="check" [size]="11"/>{{ citeLabel(c.id) }}in context</span>
-              } @else {
-                <span class="ml-auto text-[10.5px] px-2.5 py-0.75 rounded-full flex items-center gap-1.5 whitespace-nowrap bg-white/3 text-muted border border-border2">{{ !c.passT ? 'below threshold' : 'beyond top-K' }}</span>
-              }
-            </div>
-            <div class="text-body text-xs leading-[1.6]">{{ cap(c.content, 168) }}</div>
-            <div class="flex gap-2.5 mt-2 text-muted text-[11px]">
-              <span class="text-dim">{{ c.id }}</span>
-              <span class="text-amber">{{ ctLabel(c.contentType) }}</span>
-              <span>{{ c.tokens }} tok</span>
-            </div>
-          </div>
-        </div>
-      }
+      </button>
+    </div>
+    @if (error()) {
+      <div class="mt-3 text-red text-[12px]">{{ error() }}</div>
+    }
+  </div>
+
+  @if (result(); as r) {
+    <!-- Read-only retrieval settings (used by the similarity-search branch) -->
+    <div class="flex items-center gap-6.5 px-6 py-3.5 border-b border-border bg-bg3 flex-wrap">
+      <div class="flex items-center gap-2.75">
+        <span class="text-muted text-[11px] tracking-wide uppercase">Metric</span>
+        <span class="text-text text-[13px]">cosine</span>
+      </div>
+      <div class="flex items-center gap-2.75">
+        <span class="text-muted text-[11px] tracking-wide uppercase">Top-K</span>
+        <span class="text-text text-[13px]">{{ r.topK }}</span>
+      </div>
+      <div class="flex items-center gap-2.75">
+        <span class="text-muted text-[11px] tracking-wide uppercase">Min similarity</span>
+        <span class="text-text text-[13px]">{{ fmt(r.similarityThreshold) }}</span>
+      </div>
+      <div class="ml-auto text-muted text-[11.5px] whitespace-nowrap">
+        <b class="text-amber">{{ r.toolCalls.length }}</b> tool call{{ r.toolCalls.length === 1 ? '' : 's' }} · <b class="text-amber">{{ totalEntries() }}</b> entr{{ totalEntries() === 1 ? 'y' : 'ies' }} placed in prompt
+      </div>
     </div>
 
-    <aside class="w-full lg:w-98 lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-bg3 flex flex-col overflow-auto">
-      <div class="px-5 py-4 border-b border-border flex items-center gap-2.5 text-text font-semibold text-[13px]"><va-icon name="spark" [size]="15" class="text-amber"/>Assistant answer</div>
-      <div class="px-5 py-4.5 flex flex-col gap-4">
-        <div>
-          <div class="text-muted text-[10.5px] tracking-wide uppercase mb-2.5">Grounded in {{ inCtx().length }} retrieved chunk{{ inCtx().length === 1 ? '' : 's' }}</div>
-          <div class="text-body text-[13px] leading-[1.7]">
-            @if (inCtx().length) {
-              @for (p of answerParts(); track $index) {
-                {{ p.text }}@if (p.cite) {<span class="text-amber text-[10px] align-super px-px cursor-pointer">[{{ p.cite }}]</span>}
+    <div class="flex-1 flex min-h-0 max-lg:flex-col">
+      <!-- Tool-call trace -->
+      <div class="flex-1 overflow-auto px-6 py-4.5 flex flex-col gap-4 min-w-0">
+        <div class="text-muted text-[11px] tracking-wide uppercase mb-0.75">Tool-call trace — what the model put in the prompt</div>
+
+        @if (!r.toolCalls.length) {
+          <div class="text-muted text-xs">The model answered without calling a tool.</div>
+        }
+
+        @for (call of r.toolCalls; track $index) {
+          <div class="flex flex-col gap-2.75">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="text-[11px] px-2.5 py-0.75 rounded-full bg-amber/10 text-amber border border-amber/35 flex items-center gap-1.5 whitespace-nowrap"><va-icon name="set" [size]="11"/>{{ call.tool }}</span>
+              @if (call.query) {
+                <span class="text-body text-[12px]">query: <span class="text-text">“{{ call.query }}”</span></span>
               }
-            } @else {
-              <span class="text-muted">No chunks pass the current threshold — the assistant would say it
-                doesn't have that information. Lower the minimum similarity to widen recall.</span>
-            }
-          </div>
-        </div>
-        <div>
-          <div class="text-muted text-[10.5px] tracking-wide uppercase mb-2.5">Context window</div>
-          <div class="grid grid-cols-2 gap-2.75">
-            <div class="bg-bg2 border border-border rounded-lg px-3 py-2.75">
-              <div class="text-muted text-[10px] tracking-wide uppercase mb-1.25">Chunks used</div>
-              <div class="text-text text-[17px] font-semibold">{{ inCtx().length }}<small class="text-[11px] text-muted font-normal"> / {{ ranked().length }}</small></div>
+              @if (call.client) {
+                <span class="text-body text-[12px]">client: <span class="text-text">{{ call.client }}</span></span>
+              }
+              <span class="ml-auto text-muted text-[11px]">{{ call.entries.length }} entr{{ call.entries.length === 1 ? 'y' : 'ies' }}</span>
             </div>
-            <div class="bg-bg2 border border-border rounded-lg px-3 py-2.75">
-              <div class="text-muted text-[10px] tracking-wide uppercase mb-1.25">Tokens</div>
-              <div class="text-text text-[17px] font-semibold">{{ ctxTokens() }}<small class="text-[11px] text-muted font-normal"> / 4k</small></div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="text-muted text-[10.5px] tracking-wide uppercase mb-2.5">Sources sent</div>
-          <div class="flex flex-col gap-1.75">
-            @if (inCtx().length) {
-              @for (c of inCtx(); track c.id; let i = $index) {
-                <div class="flex items-center gap-2.5 bg-bg2 border border-border rounded-lg px-2.75 py-2.5 text-[11.5px]">
-                  <span class="w-4.5 h-4.5 rounded bg-amber/10 text-amber border border-amber/35 flex items-center justify-center text-[10px] shrink-0">{{ i + 1 }}</span>
-                  <span class="text-body overflow-hidden text-ellipsis whitespace-nowrap flex-1">{{ c.title }}</span>
-                  <span class="text-amber text-[11px]">{{ fmt(c.score) }}</span>
+
+            @for (e of call.entries; track $index) {
+              <div class="grid grid-cols-[54px_1fr] gap-3.75 bg-bg2 border border-amber/35 rounded-[10px] px-3.5 py-3">
+                <div class="flex flex-col items-center gap-1.5">
+                  @if (e.score != null) {
+                    <div class="text-sm font-semibold text-amber">{{ fmt(e.score) }}</div>
+                    <div class="w-1.5 flex-1 min-h-8.5 bg-border2 rounded relative overflow-hidden">
+                      <i class="absolute left-0 right-0 bottom-0 bg-amber shadow-[0_0_7px_#f0a832]" [style.height.%]="e.score * 100"></i>
+                    </div>
+                  } @else {
+                    <div class="text-[10px] text-muted text-center leading-tight">exact<br>match</div>
+                  }
+                  <div class="text-muted text-[10px]">#{{ $index + 1 }}</div>
                 </div>
-              }
-            } @else {
-              <div class="text-muted text-xs">—</div>
+                <div class="min-w-0">
+                  <div class="text-text text-[13px] font-medium overflow-hidden text-ellipsis whitespace-nowrap mb-1.5">{{ firstLine(e.content) }}</div>
+                  <div class="text-body text-xs leading-[1.6]">{{ snippet(e.content, 200) }}</div>
+                  @if (e.metadata; as m) {
+                    <div class="flex gap-2.5 mt-2 text-muted text-[11px] flex-wrap">
+                      @if (m.contentType) { <span class="text-amber">{{ contentTypeLabel(m.contentType) }}</span> }
+                      @if (m.client) { <span>{{ m.client }}</span> }
+                    </div>
+                  }
+                </div>
+              </div>
             }
           </div>
-        </div>
+        }
       </div>
-    </aside>
-  </div>
+
+      <!-- Assistant answer -->
+      <aside class="w-full lg:w-98 lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-bg3 flex flex-col overflow-auto">
+        <div class="px-5 py-4 border-b border-border flex items-center gap-2.5 text-text font-semibold text-[13px]"><va-icon name="spark" [size]="15" class="text-amber"/>Assistant answer</div>
+        <div class="px-5 py-4.5 flex flex-col gap-4">
+          <div class="text-muted text-[10.5px] tracking-wide uppercase">Grounded in {{ totalEntries() }} entr{{ totalEntries() === 1 ? 'y' : 'ies' }} placed in the prompt</div>
+          <div class="text-body text-[13px] leading-[1.7] [&_strong]:text-amber [&_a]:text-amber [&_a]:underline" [innerHTML]="r.answer"></div>
+        </div>
+      </aside>
+    </div>
+  } @else if (running()) {
+    <div class="flex-1 flex items-center justify-center gap-2.5 text-muted text-sm px-6 text-center">
+      <va-icon name="redo" [size]="14" class="animate-spin"/>Running the assistant…
+    </div>
+  } @else {
+    <div class="flex-1 flex items-center justify-center text-muted text-sm px-6 text-center">
+      Enter a query and hit Run to see which entries the assistant retrieves into its prompt.
+    </div>
+  }
 </div>

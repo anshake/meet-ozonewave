@@ -1,9 +1,5 @@
 // Real backend-backed types for the Embeddings list. Names mirror the backend
 // (com.shake.ow.model.ProfileDocumentDto + the metadata written by IngestionService).
-import {fmtMonth} from './kb-data';
-
-export {fmtMonth};
-
 // Mirrors com.shake.ow.ingest.ContentType.
 export type ContentTypeId =
   | 'PROJECT'

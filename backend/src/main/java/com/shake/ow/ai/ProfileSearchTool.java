@@ -1,6 +1,7 @@
 package com.shake.ow.ai;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.document.Document;
@@ -24,6 +25,7 @@ public class ProfileSearchTool {
     private final VectorStore vectorStore;
     private final ProfileRepository profileRepository;
     private final ToolProperties toolProperties;
+    private final ToolCallTrace trace;
 
     @Tool(description = """
             Search Anton Pavlik's professional profile to retrieve factual information.
@@ -51,6 +53,8 @@ public class ProfileSearchTool {
             if (contents.isEmpty()) {
                 return "No relevant profile information found for client: " + client;
             }
+            trace.record(new ToolCallTrace.ToolInvocation("searchProfile", query, client,
+                    contents.stream().map(c -> new ToolCallTrace.TracedEntry(null, c, null)).toList()));
             final var result = String.join("\n\n---\n\n", contents);
             log.trace("Search results (client SQL): {}", result);
             return result;
@@ -67,13 +71,21 @@ public class ProfileSearchTool {
             return "No relevant profile information found for: " + query;
         }
 
-        final var result = docs.stream()
+        final var ranked = docs.stream()
                                .sorted(Comparator.comparing(
                                        doc -> (String) doc.getMetadata().get("startDate"),
                                        Comparator.nullsLast(Comparator.reverseOrder())))
                                .limit(toolProperties.candidateK())
-                               .map(Document::getText)
-                               .collect(Collectors.joining("\n\n---\n\n"));
+                               .toList();
+
+        trace.record(new ToolCallTrace.ToolInvocation("searchProfile", query, null,
+                ranked.stream()
+                      .map(doc -> new ToolCallTrace.TracedEntry(doc.getScore(), doc.getText(), doc.getMetadata()))
+                      .toList()));
+
+        final var result = ranked.stream()
+                                 .map(Document::getText)
+                                 .collect(Collectors.joining("\n\n---\n\n"));
         log.trace("Search results: {}", result);
         return result;
     }
@@ -92,9 +104,8 @@ public class ProfileSearchTool {
             return "No contact information found.";
         }
 
-        final var result = String.join("\n\n---\n\n", contents);
-        log.trace("Contact info results: {}", result);
-        return result;
+        recordContents("getContactInfo", contents);
+        return String.join("\n\n---\n\n", contents);
     }
 
     @Tool(description = """
@@ -111,8 +122,12 @@ public class ProfileSearchTool {
             return "No availability information found.";
         }
 
-        final var result = String.join("\n\n---\n\n", contents);
-        log.trace("Availability results: {}", result);
-        return result;
+        recordContents("getAvailability", contents);
+        return String.join("\n\n---\n\n", contents);
+    }
+
+    private void recordContents(String tool, List<String> contents) {
+        trace.record(new ToolCallTrace.ToolInvocation(tool, null, null,
+                contents.stream().map(c -> new ToolCallTrace.TracedEntry(null, c, null)).toList()));
     }
 }

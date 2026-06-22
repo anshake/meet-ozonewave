@@ -13,6 +13,7 @@ import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryReposito
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
@@ -31,10 +32,27 @@ public class AiConfig {
     }
 
     @Bean
+    @Primary
     ChatClient conversationChatClient(AnthropicChatModel chatModel, ChatMemory chatMemory,
             ProfileSearchTool profileSearchTool) {
         return ChatClient.builder(chatModel)
                          .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+                         .defaultTools(profileSearchTool)
+                         .defaultOptions(AnthropicChatOptions
+                                 .builder()
+                                 .cacheOptions(AnthropicCacheOptions
+                                         .builder()
+                                         .strategy(SYSTEM_AND_TOOLS)
+                                         .build())
+                         )
+                         .build();
+    }
+
+    // Stateless variant for the test-embeddings endpoint: same tools/options as the live client but no
+    // chat-memory advisor, so test runs don't read or write conversation history.
+    @Bean
+    ChatClient testChatClient(AnthropicChatModel chatModel, ProfileSearchTool profileSearchTool) {
+        return ChatClient.builder(chatModel)
                          .defaultTools(profileSearchTool)
                          .defaultOptions(AnthropicChatOptions
                                  .builder()

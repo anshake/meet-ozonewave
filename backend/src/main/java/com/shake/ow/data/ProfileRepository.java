@@ -1,13 +1,15 @@
-package com.shake.ow.ai;
+package com.shake.ow.data;
 
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import com.shake.ow.ingest.ContentType;
 
+@Repository
 public interface ProfileRepository extends JpaRepository<ProfileDocument, UUID> {
 
     @Query(value = "SELECT content FROM vector_store WHERE lower(metadata->>'client') = lower(:client)",

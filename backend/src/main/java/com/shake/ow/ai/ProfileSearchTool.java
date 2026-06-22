@@ -11,6 +11,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
 import com.shake.ow.ingest.ContentType;
+import com.shake.ow.data.ProfileRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

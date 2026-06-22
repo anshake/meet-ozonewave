@@ -17,67 +17,53 @@
       }
     </div>
 
-    @if (checked().size > 0) {
-      <div class="flex items-center gap-3 px-6 py-2.5 border-b border-border bg-amber/10 text-amber text-xs">
-        <span><b>{{ checked().size }}</b> selected</span>
-        <span class="flex-1"></span>
-        <button class="btn" (click)="reembed(checkedIds())">
-          <va-icon name="redo" [size]="13"/>
-          Re-embed
-        </button>
-        <button class="btn-danger" (click)="remove(checkedIds())">
-          <va-icon name="trash" [size]="13"/>
-          Delete
-        </button>
-        <button class="btn" (click)="checked.set(emptySet())">Clear</button>
-      </div>
-    }
-
     <div class="flex-1 overflow-auto">
       <div [class]="row + ' sticky top-0 bg-bg3 z-1 text-muted text-[11px] tracking-wide uppercase'">
-        <div [class]="ck + (allChecked() ? ' bg-amber border-amber' : ' border-border2')" (click)="toggleAll()">
-          @if (allChecked()) {
-            <va-icon name="check" [size]="11"/>
-          }
-        </div>
         <div>Embedding</div>
         <div>Content type</div>
       </div>
 
-      @for (c of view(); track c.id) {
-        <div (click)="selId.set(c.id)"
-             [class]="row + ' cursor-pointer ' + (c.id === selId() ? 'bg-amber/10 shadow-[inset_2px_0_0_#f0a832]' : 'hover:bg-white/2.5')">
-          <div [class]="ck + (checked().has(c.id) ? ' bg-amber border-amber' : ' border-border2')"
-               (click)="toggleCheck(c.id, $event)">
-            @if (checked().has(c.id)) {
-              <va-icon name="check" [size]="11"/>
-            }
-          </div>
-          <div class="min-w-0">
-            <div
-              class="text-text text-[13px] font-medium mb-0.75 whitespace-nowrap overflow-hidden text-ellipsis">{{ c.title }}
+      @if (loading()) {
+        <div class="flex items-center justify-center gap-2 text-muted text-sm p-10">Loading embeddings…</div>
+      } @else if (error()) {
+        <div class="flex flex-col items-center justify-center gap-2 text-red text-sm p-10 text-center">
+          <va-icon name="dim" [size]="20"/>
+          <div>Couldn’t load embeddings.</div>
+        </div>
+      } @else if (view().length === 0) {
+        <div class="flex flex-col items-center justify-center gap-3 text-muted text-center p-10">
+          <va-icon name="book" [size]="28" class="text-dim"/>
+          <div>No embeddings yet.</div>
+        </div>
+      } @else {
+        @for (d of view(); track d.id) {
+          <div (click)="selId.set(d.id)"
+               [class]="row + ' cursor-pointer ' + (d.id === selId() ? 'bg-amber/10 shadow-[inset_2px_0_0_#f0a832]' : 'hover:bg-white/2.5')">
+            <div class="min-w-0">
+              <div
+                class="text-text text-[13px] font-medium mb-0.75 whitespace-nowrap overflow-hidden text-ellipsis">{{ title(d) }}
+              </div>
+              <div class="text-muted text-[11px] flex gap-2.5 items-center">
+                <span class="flex gap-1.5 flex-wrap">
+                  @for (s of d.metadata.skills.slice(0, 3); track s) {
+                    <span
+                      class="text-[10.5px] text-amber bg-amber/10 border border-amber/35 rounded-[5px] px-1.5 py-px whitespace-nowrap">{{ s }}</span>
+                  }
+                  @if (d.metadata.skills.length > 3) {
+                    <span class="text-dim">+{{ d.metadata.skills.length - 3 }}</span>
+                  }
+                </span>
+              </div>
             </div>
-            <div class="text-muted text-[11px] flex gap-2.5 items-center">
-              <span class="text-dim">{{ c.id }}</span>
-              <span class="flex gap-1.5 flex-wrap">
-                @for (s of c.skills.slice(0, 3); track s) {
-                  <span
-                    class="text-[10.5px] text-amber bg-amber/10 border border-amber/35 rounded-[5px] px-1.5 py-px whitespace-nowrap">{{ s }}</span>
-                }
-                @if (c.skills.length > 3) {
-                  <span class="text-dim">+{{ c.skills.length - 3 }}</span>
-                }
+            <div>
+              <span
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border2 bg-white/2 text-[11.5px] text-body whitespace-nowrap">
+                <span class="w-1.5 h-1.5 rounded-sm shrink-0"
+                      [style.background]="'#6b82a8'"></span>{{ contentTypeLabel(d.metadata.contentType) }}
               </span>
             </div>
           </div>
-          <div>
-            <span
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border2 bg-white/2 text-[11.5px] text-body whitespace-nowrap">
-              <span class="w-1.5 h-1.5 rounded-sm shrink-0"
-                    [style.background]="'#6b82a8'"></span>{{ ctLabel(c.contentType) }}
-            </span>
-          </div>
-        </div>
+        }
       }
     </div>
   </div>
@@ -91,7 +77,7 @@
     [style.--panel-w]="panelWidth() + 'px'">
     @if (sel(); as s) {
       <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-        <span class="text-text text-[13px] font-semibold">{{ s.id }}</span>
+        <span class="text-text text-[13px] font-semibold">{{ title(s) }}</span>
         <button
           class="w-6.5 h-6.5 rounded-md border border-border2 bg-transparent text-muted cursor-pointer flex items-center justify-center hover:text-text hover:border-dim"
           (click)="selId.set(null)">
@@ -102,78 +88,46 @@
         <div>
           <div class="field-label"><span>Content</span></div>
           <div
-            class="bg-bg border border-border2 rounded-[9px] px-3.5 py-3 text-text font-mono text-[12.5px] leading-[1.65] min-h-37.5 whitespace-pre-wrap outline-none focus:border-amber focus:shadow-[0_0_0_3px_rgba(240,168,50,0.10)]"
-            contenteditable (blur)="commitContent(s.id, $event)">{{ s.content }}
-          </div>
+            class="bg-bg border border-border2 rounded-[9px] px-3.5 py-3 text-text font-mono text-[12.5px] leading-[1.65] min-h-37.5 whitespace-pre-wrap">{{ s.content }}</div>
         </div>
         <div>
           <div class="field-label">Content type</div>
-          <va-ct-select [value]="s.contentType" (changed)="kb.update(s.id, {contentType: $event})"/>
+          <div class="text-body text-xs">{{ contentTypeLabel(s.metadata.contentType) }}</div>
         </div>
-        @if (isDated(s.contentType)) {
+        @if (s.metadata.client) {
           <div>
             <div class="field-label">Client</div>
-            <input class="input" [value]="s.client || ''" placeholder="Client / employer"
-                   (input)="kb.update(s.id, {client: $any($event.target).value || null})"/>
+            <div class="text-body text-xs">{{ s.metadata.client }}</div>
           </div>
+        }
+        @if (s.metadata.startDate || s.metadata.endDate) {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <div class="field-label">Start</div>
-              <input type="month" class="input" [value]="s.startDate || ''"
-                     (input)="kb.update(s.id, {startDate: $any($event.target).value || null})"/>
+              <div class="text-body text-xs">{{ fmtMonth(s.metadata.startDate) || '—' }}</div>
             </div>
             <div>
               <div class="field-label">End</div>
-              <input type="month" class="input" [value]="s.endDate || ''"
-                     (input)="kb.update(s.id, {endDate: $any($event.target).value || null})"/>
+              <div class="text-body text-xs">{{ fmtMonth(s.metadata.endDate) || '—' }}</div>
             </div>
           </div>
-        } @else {
-          <div
-            class="text-muted text-[11px] flex gap-2 items-start px-3 py-2.5 bg-white/2 border border-border2 rounded-md leading-[1.45]">
-            <va-icon name="dim" [size]="13"/>
-            <span><b class="text-body">client</b>, <b class="text-body">startDate</b> &amp;
-              <b class="text-body">endDate</b> are <span class="text-red">null</span> for {{ ctLabel(s.contentType) }}.</span>
+        }
+        @if (s.metadata.skills.length) {
+          <div>
+            <div class="field-label">Skills</div>
+            <div class="flex gap-1.5 flex-wrap">
+              @for (skill of s.metadata.skills; track skill) {
+                <span
+                  class="text-[10.5px] text-amber bg-amber/10 border border-amber/35 rounded-[5px] px-1.5 py-px whitespace-nowrap">{{ skill }}</span>
+              }
+            </div>
           </div>
         }
-        <div>
-          <div class="field-label">Skills</div>
-          <va-skills [skills]="s.skills" (changed)="kb.update(s.id, {skills: $event})"/>
-        </div>
-        <div class="grid grid-cols-2 gap-x-4 gap-y-3.5">
-          <div>
-            <div class="text-muted text-[11px] mb-0.75">Tokens</div>
-            <div class="text-body text-xs flex items-center gap-1.5">{{ s.tokens }}</div>
-          </div>
-          <div>
-            <div class="text-muted text-[11px] mb-0.75">Vector</div>
-            <div class="text-body text-xs flex items-center gap-1.5">1536d · cosine</div>
-          </div>
-          <div>
-            <div class="text-muted text-[11px] mb-0.75">Updated</div>
-            <div class="text-body text-xs flex items-center gap-1.5">{{ s.updated }}</div>
-          </div>
-        </div>
-        <div
-          class="text-amber text-[11px] flex gap-2 items-start px-3 py-2.5 bg-amber/[0.07] border border-amber/20 rounded-md leading-[1.45]">
-          <va-icon name="embed" [size]="13"/>
-          Editing marks this embedding stale — re-embed to update what the assistant retrieves.
-        </div>
-      </div>
-      <div class="px-5 py-3.5 border-t border-border flex gap-2.5">
-        <button class="btn-danger flex-1 justify-center" (click)="remove([s.id])">
-          <va-icon name="trash" [size]="13"/>
-          Delete
-        </button>
-        <button class="btn-primary flex-1 justify-center" (click)="reembed([s.id])">
-          <va-icon name="redo" [size]="13"/>
-          Save &amp; re-embed
-        </button>
       </div>
     } @else {
       <div class="flex-1 flex flex-col items-center justify-center gap-3 text-muted text-center p-10">
         <va-icon name="book" [size]="28" class="text-dim"/>
-        <div>Select an embedding to view and edit its document.</div>
+        <div>Select an embedding to view its document.</div>
       </div>
     }
   </aside>

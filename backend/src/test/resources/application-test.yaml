@@ -16,6 +16,9 @@ ow:
         error-dir: cv-chunks/error
         inbox-dir: cv-chunks/in
         ingested-dir: cv-chunks/ingested
+    admin:
+        username: tst
+        password: 123
 
 logging:
     level:

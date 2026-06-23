@@ -1,0 +1,36 @@
+<div class="fixed inset-0 flex items-center justify-center bg-bg text-body font-mono text-[13px] px-5">
+  <form class="w-full max-w-80 flex flex-col gap-5" (ngSubmit)="submit()">
+    <div class="flex flex-col items-center gap-2.5 text-center">
+      <img src="logo.png" width="52" height="36" alt="OzoneWave" />
+      <div>
+        <div class="text-text font-semibold tracking-wide">OZONEWAVE</div>
+        <div class="text-muted text-[10.5px] tracking-wider">vector console — sign in</div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <label class="flex flex-col gap-1.5">
+        <span class="text-muted text-[10px] tracking-[1.4px] uppercase">Username</span>
+        <input class="bg-bg3 border border-border rounded-lg px-3 py-2.5 text-text outline-none focus:border-amber/55"
+               name="username" autocomplete="username" autofocus
+               [ngModel]="username()" (ngModelChange)="username.set($event)"/>
+      </label>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-muted text-[10px] tracking-[1.4px] uppercase">Password</span>
+        <input class="bg-bg3 border border-border rounded-lg px-3 py-2.5 text-text outline-none focus:border-amber/55"
+               type="password" name="password" autocomplete="current-password"
+               [ngModel]="password()" (ngModelChange)="password.set($event)"/>
+      </label>
+    </div>
+
+    @if (error()) {
+      <div class="text-[12px] text-red-400/90">{{ error() }}</div>
+    }
+
+    <button type="submit"
+            class="rounded-lg bg-amber/10 border border-amber/35 text-amber px-3 py-2.5 hover:bg-amber/15 disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="submitting()">
+      {{ submitting() ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+</div>

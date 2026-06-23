@@ -30,6 +30,9 @@ spring:
         default-property-inclusion: non_null
 
 ow:
+    admin:
+        username: ${OW_ADMIN_USERNAME:}
+        password: ${OW_ADMIN_PASSWORD:}
     ai:
         tool:
             top-k: 40

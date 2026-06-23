@@ -1,7 +1,7 @@
 <div class="fixed inset-0 flex bg-bg text-body font-mono text-[13px] overflow-hidden">
   <aside class="w-16 md:w-59.5 shrink-0 bg-bg3 border-r border-border flex flex-col">
     <div class="flex items-center gap-2.5 px-3 md:px-4.5 py-4 border-b border-border justify-center md:justify-start">
-      <div class="w-6.5 h-6.5 shrink-0 border border-amber rounded-md flex items-center justify-center text-amber text-sm shadow-[inset_0_0_14px_rgba(240,168,50,0.25)]">◈</div>
+      <img src="logo.png" width="52" height="36" alt="OzoneWave" class="shrink-0"/>
       <div class="hidden md:block">
         <div class="text-text font-semibold text-[13px] tracking-wide">OZONEWAVE</div>
         <div class="text-muted text-[10.5px] tracking-wider">vector console</div>
@@ -12,19 +12,23 @@
       <a class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-body cursor-pointer border border-transparent whitespace-nowrap justify-center md:justify-start hover:bg-white/[0.035] [&.on]:bg-amber/10 [&.on]:border-amber/35 [&.on]:text-amber"
          routerLink="/admin/embeddings" routerLinkActive="on"
          [routerLinkActiveOptions]="{exact: false}">
-        <va-icon name="list"/><span class="hidden md:inline">Embeddings</span>
+        <i class="fa-solid fa-list text-[15px]"></i><span class="hidden md:inline">Embeddings</span>
       </a>
       <a class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-body cursor-pointer border border-transparent whitespace-nowrap justify-center md:justify-start hover:bg-white/[0.035] [&.on]:bg-amber/10 [&.on]:border-amber/35 [&.on]:text-amber"
          routerLink="/admin/test" routerLinkActive="on">
-        <va-icon name="test"/><span class="hidden md:inline">Test embeddings</span>
+        <i class="fa-solid fa-flask text-[15px]"></i><span class="hidden md:inline">Test embeddings</span>
       </a>
     </nav>
     <div class="mt-auto px-4 py-3.5 border-t border-border flex items-center gap-2.5 justify-center md:justify-start">
       <div class="w-7.5 h-7.5 shrink-0 rounded-md bg-linear-to-br from-amber/30 to-amber/5 border border-border2 flex items-center justify-center text-amber text-[11px]">AP</div>
-      <div class="hidden md:block">
-        <div class="text-text text-xs">Anton Pavlik</div>
+      <div class="hidden md:block min-w-0 flex-1">
+        <div class="text-text text-xs truncate">{{ username() ?? 'Anton Pavlik' }}</div>
         <div class="text-muted text-[10.5px]">owner</div>
       </div>
+      <button type="button" (click)="logout()" title="Sign out"
+              class="hidden md:flex shrink-0 items-center justify-center w-7 h-7 rounded-md text-muted hover:text-amber hover:bg-white/[0.035] cursor-pointer">
+        <i class="fa-solid fa-right-from-bracket text-[15px]"></i>
+      </button>
     </div>
   </aside>
 

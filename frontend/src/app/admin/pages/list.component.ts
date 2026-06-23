@@ -11,7 +11,6 @@ import {
   title,
 } from '../profile-document.model';
 import {fmtMonth} from '../kb-data';
-import {IconComponent} from '../shared/icon.component';
 
 const ROW = 'grid grid-cols-[1fr_140px] gap-3.5 items-center px-6 py-[13px] border-b border-border';
 
@@ -24,7 +23,7 @@ type LoadState =
 @Component({
   selector: 'app-admin-list',
   standalone: true,
-  imports: [RouterLink, IconComponent],
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {class: 'flex-1 flex flex-col min-w-0'},
   templateUrl: './list.component.html',

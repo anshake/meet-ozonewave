@@ -1,7 +1,7 @@
 <div class="flex-1 overflow-auto flex flex-col">
   <!-- Query -->
   <div class="px-6 pt-5.5 pb-4.5 border-b border-border">
-    <div class="text-muted text-[10.5px] tracking-[0.8px] uppercase mb-2.75 flex items-center gap-2 whitespace-nowrap"><va-icon name="search" [size]="13"/>Query — runs against the live assistant</div>
+    <div class="text-muted text-[10.5px] tracking-[0.8px] uppercase mb-2.75 flex items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-magnifying-glass text-[13px]"></i>Query — runs against the live assistant</div>
     <div class="flex items-center gap-2.75 bg-bg2 border border-amber/35 rounded-[10px] px-3.5 py-3 shadow-[0_0_0_3px_rgba(240,168,50,0.05)]">
       <span class="text-amber text-[15px]">❯</span>
       <input class="flex-1 bg-transparent border-0 outline-none text-text font-mono text-sm placeholder:text-dim"
@@ -9,9 +9,9 @@
              placeholder="Ask what the assistant should answer…"/>
       <button class="btn-primary" [disabled]="running() || !query().trim()" (click)="run()">
         @if (running()) {
-          <va-icon name="redo" [size]="12" class="animate-spin"/>Running…
+          <i class="fa-solid fa-arrows-rotate text-[12px] animate-spin"></i>Running…
         } @else {
-          <va-icon name="play" [size]="12"/>Run
+          <i class="fa-solid fa-play text-[12px]"></i>Run
         }
       </button>
     </div>
@@ -23,10 +23,6 @@
   @if (result(); as r) {
     <!-- Read-only retrieval settings (used by the similarity-search branch) -->
     <div class="flex items-center gap-6.5 px-6 py-3.5 border-b border-border bg-bg3 flex-wrap">
-      <div class="flex items-center gap-2.75">
-        <span class="text-muted text-[11px] tracking-wide uppercase">Metric</span>
-        <span class="text-text text-[13px]">cosine</span>
-      </div>
       <div class="flex items-center gap-2.75">
         <span class="text-muted text-[11px] tracking-wide uppercase">Top-K</span>
         <span class="text-text text-[13px]">{{ r.topK }}</span>
@@ -52,7 +48,7 @@
         @for (call of r.toolCalls; track $index) {
           <div class="flex flex-col gap-2.75">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <span class="text-[11px] px-2.5 py-0.75 rounded-full bg-amber/10 text-amber border border-amber/35 flex items-center gap-1.5 whitespace-nowrap"><va-icon name="set" [size]="11"/>{{ call.tool }}</span>
+              <span class="text-[11px] px-2.5 py-0.75 rounded-full bg-amber/10 text-amber border border-amber/35 flex items-center gap-1.5 whitespace-nowrap"><i class="fa-solid fa-gear text-[11px]"></i>{{ call.tool }}</span>
               @if (call.query) {
                 <span class="text-body text-[12px]">query: <span class="text-text">“{{ call.query }}”</span></span>
               }
@@ -93,7 +89,7 @@
 
       <!-- Assistant answer -->
       <aside class="w-full lg:w-98 lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-bg3 flex flex-col overflow-auto">
-        <div class="px-5 py-4 border-b border-border flex items-center gap-2.5 text-text font-semibold text-[13px]"><va-icon name="spark" [size]="15" class="text-amber"/>Assistant answer</div>
+        <div class="px-5 py-4 border-b border-border flex items-center gap-2.5 text-text font-semibold text-[13px]"><i class="fa-solid fa-wand-magic-sparkles text-[15px] text-amber"></i>Assistant answer</div>
         <div class="px-5 py-4.5 flex flex-col gap-4">
           <div class="text-muted text-[10.5px] tracking-wide uppercase">Grounded in {{ totalEntries() }} entr{{ totalEntries() === 1 ? 'y' : 'ies' }} placed in the prompt</div>
           <div class="text-body text-[13px] leading-[1.7] [&_strong]:text-amber [&_a]:text-amber [&_a]:underline" [innerHTML]="r.answer"></div>
@@ -102,7 +98,7 @@
     </div>
   } @else if (running()) {
     <div class="flex-1 flex items-center justify-center gap-2.5 text-muted text-sm px-6 text-center">
-      <va-icon name="redo" [size]="14" class="animate-spin"/>Running the assistant…
+      <i class="fa-solid fa-arrows-rotate text-[14px] animate-spin"></i>Running the assistant…
     </div>
   } @else {
     <div class="flex-1 flex items-center justify-center text-muted text-sm px-6 text-center">

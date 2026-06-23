@@ -1,6 +1,6 @@
 <div class="h-14.5 shrink-0 border-b border-border flex items-center gap-3.5 px-6">
   <a class="inline-flex items-center gap-2 bg-transparent border border-border2 rounded-md px-3 py-2 text-body font-mono text-xs cursor-pointer hover:border-dim hover:text-text" routerLink="/admin/embeddings">
-    <va-icon name="chev" [size]="12" class="rotate-180"/>Embeddings
+    <i class="fa-solid fa-chevron-left text-[12px]"></i>Embeddings
   </a>
   <div class="flex-1"></div>
 </div>
@@ -52,7 +52,7 @@
     <div class="flex gap-2.5 mt-2 max-w-170">
       <button class="btn" (click)="cancel()">Cancel</button>
       <button class="btn-primary flex-1 justify-center" [disabled]="!valid()" (click)="submit()">
-        <va-icon name="embed" [size]="13"/>Embed &amp; add to store
+        <i class="fa-solid fa-circle-nodes text-[13px]"></i>Embed &amp; add to store
       </button>
     </div>
   </div>

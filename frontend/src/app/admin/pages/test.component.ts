@@ -2,14 +2,12 @@ import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@ang
 import {AdminService} from '../admin.service';
 import {contentTypeLabel} from '../profile-document.model';
 import {RetrievalTestResponse} from '../retrieval-test.model';
-import {IconComponent} from '../shared/icon.component';
 
 // Test embeddings — drives the live assistant for a query and shows a trace of which entries each tool
 // placed into the prompt (with cosine scores for the similarity branch), plus the model's real answer.
 @Component({
   selector: 'app-admin-test',
   standalone: true,
-  imports: [IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {class: 'flex-1 flex flex-col min-w-0'},
   templateUrl: './test.component.html',

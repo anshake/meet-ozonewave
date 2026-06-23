@@ -1,7 +1,6 @@
 import {ChangeDetectionStrategy, Component, computed, signal} from '@angular/core';
 import {Router, RouterLink} from '@angular/router';
 import {ContentTypeId, ctLabel, isDated} from '../kb-data';
-import {IconComponent} from '../shared/icon.component';
 import {CtSelectComponent} from '../shared/ct-select.component';
 import {SkillsEditorComponent} from '../shared/skills-editor.component';
 
@@ -10,7 +9,7 @@ import {SkillsEditorComponent} from '../shared/skills-editor.component';
 @Component({
   selector: 'app-admin-add',
   standalone: true,
-  imports: [RouterLink, IconComponent, CtSelectComponent, SkillsEditorComponent],
+  imports: [RouterLink, CtSelectComponent, SkillsEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {class: 'flex-1 flex flex-col min-w-0'},
   templateUrl: './add.component.html',

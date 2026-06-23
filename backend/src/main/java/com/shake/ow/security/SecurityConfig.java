@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -47,13 +47,14 @@ public class SecurityConfig {
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
-    InMemoryUserDetailsManager userDetailsManager(AdminProperties props, PasswordEncoder encoder) {
+    InMemoryUserDetailsManager userDetailsManager(AdminProperties props) {
+        // The stored password is already a hash carrying its {bcrypt} prefix — never re-encode it.
         var owner = User.withUsername(props.username())
-            .password(encoder.encode(props.password()))
+            .password(props.password())
             .build();
         return new InMemoryUserDetailsManager(owner);
     }

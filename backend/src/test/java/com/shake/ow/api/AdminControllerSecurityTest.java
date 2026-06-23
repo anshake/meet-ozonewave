@@ -22,7 +22,9 @@ import com.shake.ow.service.RetrievalTestService;
 
 @WebMvcTest(AdminController.class)
 @Import(SecurityConfig.class)
-@TestPropertySource(properties = {"ow.admin.username=tester", "ow.admin.password=secret"})
+@TestPropertySource(properties = {
+    "ow.admin.username=tester",
+    "ow.admin.password={noop}secret"})
 class AdminControllerSecurityTest {
 
     @Autowired

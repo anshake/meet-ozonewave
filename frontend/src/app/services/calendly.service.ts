@@ -18,8 +18,10 @@ const WIDGET_JS = 'https://assets.calendly.com/assets/external/widget.js';
 export class CalendlyService {
   private scriptPromise?: Promise<void>;
 
-  open(url: string): void {
-    this.load().then(() => window.Calendly?.initPopupWidget({url}));
+  open(url: string): Promise<void> {
+    return this.load()
+      .then(() => window.Calendly?.initPopupWidget({url}))
+      .catch(err => console.error('Calendly failed to load', err));
   }
 
   private load(): Promise<void> {
@@ -39,7 +41,11 @@ export class CalendlyService {
       script.src = WIDGET_JS;
       script.async = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Calendly widget'));
+      script.onerror = () => {
+        // Clear the cached promise so a failed CDN load can be retried.
+        this.scriptPromise = undefined;
+        reject(new Error('Failed to load Calendly widget'));
+      };
       document.head.appendChild(script);
     });
 

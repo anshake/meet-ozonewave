@@ -20,7 +20,12 @@ export class CalendlyService {
 
   open(url: string): Promise<void> {
     return this.load()
-      .then(() => window.Calendly?.initPopupWidget({url}))
+      .then(() => {
+        if (!window.Calendly) {
+          throw new Error('Calendly global not defined after load');
+        }
+        window.Calendly.initPopupWidget({url});
+      })
       .catch(err => console.error('Calendly failed to load', err));
   }
 
@@ -42,7 +47,9 @@ export class CalendlyService {
       script.async = true;
       script.onload = () => resolve();
       script.onerror = () => {
-        // Clear the cached promise so a failed CDN load can be retried.
+        // Drop the failed element and cached promise so the next click retries
+        // cleanly instead of leaving an orphan <script> behind.
+        script.remove();
         this.scriptPromise = undefined;
         reject(new Error('Failed to load Calendly widget'));
       };
